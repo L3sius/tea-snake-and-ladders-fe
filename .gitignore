@@ -20,6 +20,10 @@ dist-ssr/
 .env.local
 .env.*.local
 
+# Claude Code
+CLAUDE.md
+.claude/
+
 # Editor
 .vscode/
 .idea/
