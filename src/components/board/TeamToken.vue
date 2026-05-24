@@ -1,0 +1,68 @@
+<script setup lang="ts">
+import type { Team } from '@/types'
+
+defineProps<{
+  team: Team
+  size?: 'sm' | 'md' | 'lg'
+}>()
+</script>
+
+<template>
+  <div
+    class="team-token"
+    :class="`team-token--${size ?? 'md'}`"
+    :style="{ borderColor: team.color }"
+    :title="team.name"
+  >
+    <img
+      v-if="team.logoPath"
+      :src="team.logoPath"
+      :alt="team.name"
+      class="team-token__logo"
+      draggable="false"
+    />
+    <span v-else class="team-token__initial">{{ team.name.charAt(0) }}</span>
+  </div>
+</template>
+
+<style scoped>
+.team-token {
+  border-radius: 50%;
+  border: 2px solid;
+  background: var(--osrs-panel);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.team-token--sm {
+  width: 26px;
+  height: 26px;
+}
+
+.team-token--md {
+  width: 32px;
+  height: 32px;
+}
+
+.team-token--lg {
+  width: 48px;
+  height: 48px;
+}
+
+.team-token__logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.team-token__initial {
+  font-family: var(--font-display);
+  font-size: 0.5rem;
+  color: var(--osrs-text-bright);
+  user-select: none;
+}
+</style>

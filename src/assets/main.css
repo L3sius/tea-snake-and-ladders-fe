@@ -1,0 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;500;700&display=swap');
+
+:root {
+  /* Core palette */
+  --osrs-bg: #1a1512;
+  --osrs-bg-alt: #141010;
+  --osrs-panel: #2c1e0f;
+  --osrs-panel-light: #3d2b16;
+  --osrs-panel-hover: #4a3520;
+
+  /* Borders */
+  --osrs-border: #6b4c1e;
+  --osrs-border-light: #c8a96e;
+  --osrs-border-gold: #ffd700;
+
+  /* Text */
+  --osrs-text: #e8d5a3;
+  --osrs-text-muted: #9a8a6a;
+  --osrs-text-bright: #fff8e7;
+  --osrs-gold: #ffd700;
+  --osrs-red: #c0392b;
+  --osrs-green: #27ae60;
+  --osrs-blue: #2980b9;
+
+  /* Tier colours */
+  --tier1-bg: #1a3320;
+  --tier1-border: #2ecc71;
+  --tier1-text: #a8e6c0;
+  --tier2-bg: #1e1a38;
+  --tier2-border: #9b59b6;
+  --tier2-text: #c9b8e8;
+  --tier3-bg: #3a1010;
+  --tier3-border: #e74c3c;
+  --tier3-text: #f0a0a0;
+
+  /* Typography */
+  --font-display: 'Press Start 2P', monospace;
+  --font-body: 'Roboto', sans-serif;
+
+  /* Spacing */
+  --panel-padding: 1rem;
+  --border-radius: 2px;
+
+  /* Transitions */
+  --transition-fast: 120ms ease;
+  --transition-normal: 250ms ease;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--osrs-bg);
+  color: var(--osrs-text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: var(--osrs-gold);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--osrs-border-light);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--osrs-bg-alt);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--osrs-border);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--osrs-border-light);
+}
+
+/* Utility classes */
+.osrs-panel {
+  background: var(--osrs-panel);
+  border: 2px solid var(--osrs-border);
+  border-radius: var(--border-radius);
+  padding: var(--panel-padding);
+}
+
+.osrs-panel--gold {
+  border-color: var(--osrs-border-gold);
+}
+
+.osrs-title {
+  font-family: var(--font-display);
+  color: var(--osrs-gold);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.tier-1 {
+  --tile-bg: var(--tier1-bg);
+  --tile-border: var(--tier1-border);
+  --tile-text: var(--tier1-text);
+}
+
+.tier-2 {
+  --tile-bg: var(--tier2-bg);
+  --tile-border: var(--tier2-border);
+  --tile-text: var(--tier2-text);
+}
+
+.tier-3 {
+  --tile-bg: var(--tier3-bg);
+  --tile-border: var(--tier3-border);
+  --tile-text: var(--tier3-text);
+}
