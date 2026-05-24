@@ -12,7 +12,7 @@ const navLinks = [
   { name: 'Board', path: '/', label: 'Board' },
   { name: 'Leaderboard', path: '/leaderboard', label: 'Leaderboard' },
   { name: 'EventInfo', path: '/info', label: 'Event Info' },
-]
+] as const
 
 function rollDice() {
   gameStore.rollForCurrentTeam()

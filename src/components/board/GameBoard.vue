@@ -6,20 +6,23 @@ import TileModal from './TileModal.vue'
 import DiceRoll from '@/components/dice/DiceRoll.vue'
 import { tiles } from '@/data/tiles'
 import { boardConfig, getTilePosition, getTileSvgCenter } from '@/data/boardConfig'
-import { gameStore } from '@/stores/gameStore'
+import { gameStore, SPECIAL_TRANSITION_MS } from '@/stores/gameStore'
 import type { Tile, Team } from '@/types'
-
-const SPECIAL_TRANSITION_MS = 1000
 
 const selectedTile = ref<Tile | null>(null)
 const activeDiceRoll = computed(() => gameStore.state.activeDiceRoll)
 const teams = computed(() => gameStore.state.teams)
 
-const teamsOnTile = computed(() => {
-  return (tileId: number): Team[] =>
-    gameStore.state.teams.filter(
-      (t) => (gameStore.state.displayedPositions[t.id] ?? t.position) === tileId,
-    )
+// Map<tileId, Team[]> — O(1) per tile lookup, recomputes only when positions change
+const teamsByTile = computed(() => {
+  const map = new Map<number, Team[]>()
+  for (const team of gameStore.state.teams) {
+    const pos = gameStore.state.displayedPositions[team.id] ?? team.position
+    const bucket = map.get(pos)
+    if (bucket) bucket.push(team)
+    else map.set(pos, [team])
+  }
+  return map
 })
 
 // 3×2 grid offsets — supports up to 6 teams on the same tile without overlap
@@ -69,7 +72,7 @@ function closeModal() {
         v-for="tile in tiles"
         :key="tile.id"
         :tile="tile"
-        :teams-on-tile="teamsOnTile(tile.id)"
+        :teams-on-tile="teamsByTile.get(tile.id) ?? []"
         class="game-board__tile"
         :style="{
           gridColumn: getTilePosition(tile.id).col,

@@ -6,7 +6,7 @@ import type { Team, DiceRollEvent, TeamTaskProgress, RollHistoryEntry } from '@/
 const OVERLAY_MS = 3500
 const STEP_MS = 200
 const LAND_PAUSE_MS = 400
-const SPECIAL_TRANSITION_MS = 1000
+export const SPECIAL_TRANSITION_MS = 1000
 
 interface GameState {
   teams: Team[]

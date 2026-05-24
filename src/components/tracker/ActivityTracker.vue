@@ -2,7 +2,6 @@
 import { ref, computed } from 'vue'
 import { gameStore } from '@/stores/gameStore'
 import { mockActivities } from '@/data/mockActivity'
-import TeamToken from '@/components/board/TeamToken.vue'
 
 type Tab = 'live' | 'log'
 const activeTab = ref<Tab>('live')
@@ -60,10 +59,7 @@ function formatAge(date: Date): string {
         <ul v-else class="roll-list">
           <li v-for="entry in rollHistory" :key="entry.id" class="roll-entry">
             <div class="roll-entry__line1">
-              <TeamToken
-                :team="{ id: entry.teamId, name: entry.teamName, color: entry.teamColor, logoPath: '', position: 0, taskProgress: [] }"
-                size="sm"
-              />
+              <span class="roll-entry__dot" :style="{ background: entry.teamColor }" />
               <span class="roll-entry__team">{{ entry.teamName }}</span>
               <span class="roll-entry__verb"> rolled a </span>
               <strong class="roll-entry__roll">{{ entry.roll }}</strong>
@@ -230,6 +226,13 @@ function formatAge(date: Date): string {
   align-items: center;
   gap: 0.35rem;
   font-size: 0.82rem;
+}
+
+.roll-entry__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .roll-entry__team {

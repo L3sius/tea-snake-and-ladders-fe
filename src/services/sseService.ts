@@ -15,18 +15,24 @@ function connect() {
   })
 
   eventSource.addEventListener('dice_rolled', (e: MessageEvent) => {
-    const event: DiceRollEvent = JSON.parse(e.data)
-    gameStore.applyDiceRoll(event)
+    try {
+      const event: DiceRollEvent = JSON.parse(e.data)
+      gameStore.applyDiceRoll(event)
+    } catch { /* malformed event — ignore */ }
   })
 
   eventSource.addEventListener('board_updated', (e: MessageEvent) => {
-    const teams: Team[] = JSON.parse(e.data)
-    gameStore.setTeams(teams)
+    try {
+      const teams: Team[] = JSON.parse(e.data)
+      gameStore.setTeams(teams)
+    } catch { /* malformed event — ignore */ }
   })
 
   eventSource.addEventListener('task_progress', (e: MessageEvent) => {
-    const { teamId, tileId, dropsCollected } = JSON.parse(e.data)
-    gameStore.updateTaskProgress(teamId, tileId, dropsCollected)
+    try {
+      const { teamId, tileId, dropsCollected } = JSON.parse(e.data)
+      gameStore.updateTaskProgress(teamId, tileId, dropsCollected)
+    } catch { /* malformed event — ignore */ }
   })
 
   eventSource.addEventListener('error', () => {
