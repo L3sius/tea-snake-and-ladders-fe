@@ -10,14 +10,9 @@ const router = createRouter({
       component: BoardView,
     },
     {
-      path: '/leaderboard',
-      name: 'Leaderboard',
-      component: () => import('@/views/LeaderboardView.vue'),
-    },
-    {
-      path: '/info',
-      name: 'EventInfo',
-      component: () => import('@/views/EventInfoView.vue'),
+      path: '/activity',
+      name: 'Activity',
+      component: () => import('@/views/ActivityView.vue'),
     },
   ],
 })

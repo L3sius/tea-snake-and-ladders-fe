@@ -5,6 +5,7 @@ export interface Tile {
   tier: Tier
   name: string
   description: string
+  image?: string
   skill?: string
   requiredDrops?: number
 }
@@ -21,6 +22,7 @@ export interface Team {
   color: string
   position: number
   taskProgress: TeamTaskProgress[]
+  members: string[]
 }
 
 export interface Snake {

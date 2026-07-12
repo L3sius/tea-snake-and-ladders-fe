@@ -8,6 +8,7 @@ export const initialTeams: Team[] = [
     color: '#e74c3c',
     position: 1,
     taskProgress: [],
+    members: ['ZezimaJr', 'DragonSlyr99', 'IronKnight', 'PureRanger'],
   },
   {
     id: 'team-2',
@@ -16,6 +17,7 @@ export const initialTeams: Team[] = [
     color: '#3498db',
     position: 1,
     taskProgress: [],
+    members: ['MagicMage99', 'SwiftArcher', 'BoneCollect0r', 'GoldHoarder'],
   },
   {
     id: 'team-3',
@@ -24,6 +26,7 @@ export const initialTeams: Team[] = [
     color: '#2ecc71',
     position: 1,
     taskProgress: [],
+    members: ['SkillMaster', 'QuestCape99', 'NightWalker', 'FireMage'],
   },
   {
     id: 'team-4',
@@ -32,6 +35,7 @@ export const initialTeams: Team[] = [
     color: '#e67e22',
     position: 1,
     taskProgress: [],
+    members: ['SlayerKing', 'RuneSmith', 'TreeCutter', 'FishingPro'],
   },
   {
     id: 'team-5',
@@ -40,6 +44,7 @@ export const initialTeams: Team[] = [
     color: '#9b59b6',
     position: 1,
     taskProgress: [],
+    members: ['CookingGuru', 'FightingStyle', 'MineralKing', 'CraftingPro'],
   },
   {
     id: 'team-6',
@@ -48,5 +53,6 @@ export const initialTeams: Team[] = [
     color: '#1abc9c',
     position: 1,
     taskProgress: [],
+    members: ['FletchingArt', 'HerbloreGod', 'AgilityAce', 'ThievingHand'],
   },
 ]

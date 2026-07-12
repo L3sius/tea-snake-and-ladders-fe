@@ -57,7 +57,15 @@ function handleBackdropClick(e: MouseEvent) {
           </header>
 
           <div class="modal__body">
-            <p class="modal__description">{{ tile.description }}</p>
+            <div class="modal__task">
+              <img
+                v-if="tile.image"
+                :src="`/images/tiles/${tile.image}`"
+                :alt="tile.name"
+                class="modal__image"
+              />
+              <p class="modal__description">{{ tile.description }}</p>
+            </div>
 
             <div v-if="(tile.requiredDrops ?? 1) > 1" class="modal__drops-info">
               Requires <strong>{{ tile.requiredDrops }} drops</strong>
@@ -65,22 +73,20 @@ function handleBackdropClick(e: MouseEvent) {
 
             <div v-if="teamsOnTile.length > 0" class="modal__teams">
               <h3 class="modal__section-title">Teams on this tile</h3>
-              <div
-                v-for="team in teamsOnTile"
-                :key="team.id"
-                class="modal__team-row"
-              >
+              <div v-for="team in teamsOnTile" :key="team.id" class="modal__team-row">
                 <TeamToken :team="team" size="md" />
                 <div class="modal__team-info">
                   <span class="modal__team-name">{{ team.name }}</span>
-                  <div class="modal__progress-bar-wrap">
-                    <div
-                      class="modal__progress-bar"
-                      :style="{
-                        width: `${(getProgress(team).collected / getProgress(team).required) * 100}%`,
-                        borderColor: team.color,
-                      }"
-                    />
+                  <div class="modal__progress-row">
+                    <div class="modal__progress-bar-wrap">
+                      <div
+                        class="modal__progress-bar"
+                        :style="{
+                          width: `${(getProgress(team).collected / getProgress(team).required) * 100}%`,
+                          borderColor: team.color,
+                        }"
+                      />
+                    </div>
                     <span class="modal__progress-label">
                       {{ getProgress(team).collected }} / {{ getProgress(team).required }}
                     </span>
@@ -147,7 +153,9 @@ function handleBackdropClick(e: MouseEvent) {
   padding: 0.2rem 0.5rem;
   border-radius: var(--border-radius);
   font-size: 0.75rem;
-  transition: color var(--transition-fast), border-color var(--transition-fast);
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .modal__close:hover {
@@ -180,10 +188,31 @@ function handleBackdropClick(e: MouseEvent) {
   gap: 1rem;
 }
 
+.modal__task {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.modal__image {
+  flex-shrink: 0;
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+  border: 1px solid var(--osrs-border);
+  border-radius: var(--border-radius);
+  background: var(--osrs-bg);
+  padding: 6px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
 .modal__description {
+  flex: 1;
   font-size: 0.9rem;
   color: var(--osrs-text);
   line-height: 1.6;
+  align-self: center;
 }
 
 .modal__drops-info {
@@ -231,15 +260,19 @@ function handleBackdropClick(e: MouseEvent) {
   color: var(--osrs-text-bright);
 }
 
+.modal__progress-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .modal__progress-bar-wrap {
-  position: relative;
+  flex: 1;
   height: 12px;
   background: var(--osrs-bg);
   border: 1px solid var(--osrs-border);
   border-radius: 1px;
   overflow: hidden;
-  display: flex;
-  align-items: center;
 }
 
 .modal__progress-bar {
@@ -251,12 +284,11 @@ function handleBackdropClick(e: MouseEvent) {
 }
 
 .modal__progress-label {
-  position: absolute;
-  right: 4px;
+  flex-shrink: 0;
   font-family: var(--font-display);
   font-size: 0.45rem;
-  color: var(--osrs-text-bright);
-  text-shadow: 1px 0 0 #000, -1px 0 0 #000;
+  color: var(--osrs-text-muted);
+  white-space: nowrap;
 }
 
 .modal__no-teams {

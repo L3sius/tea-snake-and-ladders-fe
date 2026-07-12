@@ -1,22 +1,75 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { gameStore } from '@/stores/gameStore'
 import { mockActivities } from '@/data/mockActivity'
+import { formatRelativeTime } from '@/utils/formatRelativeTime'
+import TeamToken from '@/components/board/TeamToken.vue'
+import RollLog from './RollLog.vue'
+import TeamModal from './TeamModal.vue'
+import type { Team } from '@/types'
 
-type Tab = 'live' | 'log'
+const props = defineProps<{
+  // Desktop shows Roll Log as its own always-visible column instead —
+  // set by BoardView so the tab isn't duplicated there.
+  hideRollLogTab?: boolean
+}>()
+
+type Tab = 'live' | 'log' | 'leaderboard' | 'dev'
 const activeTab = ref<Tab>('live')
-const rollHistory = computed(() => gameStore.state.rollHistory)
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+// --- Leaderboard tab ---
+const rankedTeams = computed(() =>
+  [...gameStore.state.teams].sort((a, b) => b.position - a.position),
+)
+
+function rankLabel(index: number): string {
+  if (index === 0) return '1st'
+  if (index === 1) return '2nd'
+  if (index === 2) return '3rd'
+  return `${index + 1}th`
 }
 
-function formatAge(date: Date): string {
-  const secs = Math.floor((Date.now() - date.getTime()) / 1000)
-  if (secs < 60) return `${secs}s`
-  const mins = Math.floor(secs / 60)
-  if (mins < 60) return `${mins}m`
-  return `${Math.floor(mins / 60)}h`
+const rollsMadeByTeam = computed(() => {
+  const counts = new Map<string, number>()
+  for (const entry of gameStore.state.rollHistory) {
+    counts.set(entry.teamId, (counts.get(entry.teamId) ?? 0) + 1)
+  }
+  return counts
+})
+
+const selectedTeam = ref<Team | null>(null)
+
+// --- Dev Tools tab ---
+// Temporary: stands in for real dice rolls until the backend drives them.
+const connected = computed(() => gameStore.state.connected)
+const currentTeam = computed(() => gameStore.state.teams[gameStore.state.currentTeamIndex])
+const forcedRoll = ref<number | null>(null)
+
+const tick = ref(0)
+let tickInterval: ReturnType<typeof setInterval> | undefined
+onMounted(() => {
+  tickInterval = setInterval(() => tick.value++, 60_000)
+})
+onUnmounted(() => {
+  clearInterval(tickInterval)
+})
+
+const waitingLabel = computed(() => {
+  void tick.value
+  const lastRoll = gameStore.state.rollHistory[0]
+  return lastRoll ? `waiting ${formatRelativeTime(lastRoll.timestamp)}` : null
+})
+
+function rollDice() {
+  gameStore.rollForCurrentTeam()
+}
+
+function forceRoll() {
+  gameStore.rollForCurrentTeam(forcedRoll.value ?? undefined)
+}
+
+function resetTeams() {
+  gameStore.resetAll()
 }
 </script>
 
@@ -32,11 +85,26 @@ function formatAge(date: Date): string {
         Live Updates
       </button>
       <button
+        v-if="!props.hideRollLogTab"
         class="tracker-tab"
         :class="{ 'tracker-tab--active': activeTab === 'log' }"
         @click="activeTab = 'log'"
       >
         Roll Log
+      </button>
+      <button
+        class="tracker-tab"
+        :class="{ 'tracker-tab--active': activeTab === 'leaderboard' }"
+        @click="activeTab = 'leaderboard'"
+      >
+        Leaderboard
+      </button>
+      <button
+        class="tracker-tab"
+        :class="{ 'tracker-tab--active': activeTab === 'dev' }"
+        @click="activeTab = 'dev'"
+      >
+        Dev Tools
       </button>
     </div>
 
@@ -44,43 +112,83 @@ function formatAge(date: Date): string {
       <!-- Live Updates -->
       <ul v-if="activeTab === 'live'" class="live-list">
         <li v-for="entry in mockActivities" :key="entry.id" class="live-entry">
-          <span class="live-entry__age">{{ formatAge(entry.timestamp) }}</span>
+          <span class="live-entry__age">{{ formatRelativeTime(entry.timestamp) }}</span>
           <span class="live-entry__player">{{ entry.player }}</span>
           <span class="live-entry__action"> {{ entry.action }}</span>
         </li>
       </ul>
 
-      <!-- Roll Log -->
-      <template v-else>
-        <div v-if="rollHistory.length === 0" class="tracker-empty">
-          No rolls yet. Hit "Roll Dice" to start!
+      <!-- Roll Log (mobile-only tab — desktop shows it as its own column) -->
+      <RollLog v-else-if="activeTab === 'log'" />
+
+      <!-- Leaderboard -->
+      <div v-else-if="activeTab === 'leaderboard'" class="leaderboard-table">
+        <div class="leaderboard-table__header">
+          <span>Rank</span>
+          <span>Team Name</span>
+          <span>Tile</span>
+          <span>Rolls</span>
         </div>
 
-        <ul v-else class="roll-list">
-          <li v-for="entry in rollHistory" :key="entry.id" class="roll-entry">
-            <div class="roll-entry__line1">
-              <span class="roll-entry__dot" :style="{ background: entry.teamColor }" />
-              <span class="roll-entry__team">{{ entry.teamName }}</span>
-              <span class="roll-entry__verb"> rolled a </span>
-              <strong class="roll-entry__roll">{{ entry.roll }}</strong>
-              <span class="roll-entry__time">{{ formatTime(entry.timestamp) }}</span>
-            </div>
-            <div class="roll-entry__line2">
-              <span>Moved from </span>
-              <strong>{{ entry.fromPosition }}</strong>
-              <span> to </span>
-              <strong class="roll-entry__dest">{{ entry.toPosition }}</strong>
-              <template v-if="entry.snakeOrLadder">
-                <span :class="entry.snakeOrLadder.type === 'ladder' ? 'roll-entry__climb' : 'roll-entry__fall'">
-                  {{ entry.snakeOrLadder.type === 'ladder' ? ' and climbed to ' : ' and fell to ' }}
-                  <strong>{{ entry.finalPosition }}</strong>
-                </span>
-              </template>
-            </div>
-          </li>
-        </ul>
-      </template>
+        <button
+          v-for="(team, index) in rankedTeams"
+          :key="team.id"
+          class="leaderboard-table__row"
+          :class="{ 'leaderboard-table__row--top': index < 3 }"
+          @click="selectedTeam = team"
+        >
+          <span class="rank-label" :class="`rank-label--${index + 1}`">
+            {{ rankLabel(index) }}
+          </span>
+          <div class="team-cell">
+            <TeamToken :team="team" size="sm" />
+            <span class="team-cell__name">{{ team.name }}</span>
+          </div>
+          <span class="tile-cell">{{ team.position }}</span>
+          <span class="tasks-cell">{{ rollsMadeByTeam.get(team.id) ?? 0 }}</span>
+        </button>
+      </div>
+
+      <!-- Dev Tools -->
+      <div v-else class="dev-tools">
+        <p class="dev-tools__notice">
+          Temporary — stands in for the real backend-driven rolls. Will be removed once that's wired
+          up.
+        </p>
+
+        <div class="dev-tools__status">
+          <span
+            class="status-dot"
+            :class="connected ? 'status-dot--live' : 'status-dot--offline'"
+          />
+          <span class="status-label">{{ connected ? 'LIVE' : 'OFFLINE' }}</span>
+        </div>
+
+        <div v-if="currentTeam" class="turn-indicator">
+          <span class="turn-indicator__dot" :style="{ background: currentTeam.color }" />
+          <span class="turn-indicator__label">{{ currentTeam.name }}</span>
+          <span v-if="waitingLabel" class="turn-indicator__waiting">{{ waitingLabel }}</span>
+        </div>
+
+        <button class="nav-btn nav-btn--roll" @click="rollDice">Roll Dice</button>
+
+        <div class="force-roll">
+          <input
+            v-model.number="forcedRoll"
+            type="number"
+            min="1"
+            max="6"
+            placeholder="1-6"
+            class="force-roll__input"
+          />
+          <button class="nav-btn nav-btn--force" @click="forceRoll">Force</button>
+        </div>
+
+        <button class="nav-btn nav-btn--reset" @click="resetTeams">Reset</button>
+      </div>
     </div>
+
+    <TeamModal :team="selectedTeam" @close="selectedTeam = null" />
   </div>
 </template>
 
@@ -88,7 +196,7 @@ function formatAge(date: Date): string {
 .activity-tracker {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 86px);
+  flex: 1;
   min-height: 0;
 }
 
@@ -147,16 +255,11 @@ function formatAge(date: Date): string {
 /* ── Body ── */
 .tracker-body {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
   min-height: 0;
   padding: 0.4rem 0;
-}
-
-.tracker-empty {
-  padding: 1rem;
-  font-size: 0.8rem;
-  color: var(--osrs-text-muted);
-  font-style: italic;
 }
 
 /* ── Live list ── */
@@ -200,100 +303,252 @@ function formatAge(date: Date): string {
   color: var(--osrs-text-muted);
 }
 
-/* ── Roll list ── */
-.roll-list {
-  list-style: none;
+/* ── Leaderboard ──
+ * Columns are kept deliberately compact — this now lives inside a sidebar
+ * (or a mobile page), never the wide standalone page it used to be. */
+.leaderboard-table {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.3rem;
   padding: 0.4rem 0.5rem;
 }
 
-.roll-entry {
+.leaderboard-table__header {
+  display: grid;
+  grid-template-columns: 32px 1fr 36px 36px;
+  gap: 0.4rem;
+  padding: 0.3rem 0.5rem;
+  font-family: var(--font-display);
+  font-size: 0.42rem;
+  color: var(--osrs-text-muted);
+  border-bottom: 1px solid var(--osrs-border);
+}
+
+.leaderboard-table__row {
+  display: grid;
+  grid-template-columns: 32px 1fr 36px 36px;
+  gap: 0.4rem;
+  align-items: center;
+  width: 100%;
+  padding: 0.5rem;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: var(--osrs-panel-light);
+  border: 1px solid var(--osrs-border);
+  border-radius: var(--border-radius);
+  transition: border-color var(--transition-fast);
+}
+
+.leaderboard-table__row:hover {
+  border-color: var(--osrs-border-light);
+}
+
+.leaderboard-table__row--top {
+  border-color: var(--osrs-border-gold);
+}
+
+.rank-label {
+  font-family: var(--font-display);
+  font-size: 0.45rem;
+  color: var(--osrs-text-muted);
+}
+
+.rank-label--1 {
+  color: var(--osrs-gold);
+}
+.rank-label--2 {
+  color: #c0c0c0;
+}
+.rank-label--3 {
+  color: #cd7f32;
+}
+
+.team-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.team-cell__name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--osrs-text-bright);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tile-cell,
+.tasks-cell {
+  font-family: var(--font-display);
+  font-size: 0.45rem;
+  color: var(--osrs-text);
+}
+
+/* ── Dev Tools ── */
+.dev-tools {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.75rem;
+  padding: 0.75rem;
+}
+
+.dev-tools__notice {
+  font-size: 0.75rem;
+  color: var(--osrs-text-muted);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.dev-tools__status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-dot--live {
+  background: var(--osrs-green);
+  box-shadow: 0 0 6px var(--osrs-green);
+  animation: pulse 2s ease infinite;
+}
+
+.status-dot--offline {
+  background: var(--osrs-red);
+}
+
+.status-label {
+  font-family: var(--font-display);
+  font-size: 0.42rem;
+  color: var(--osrs-text-muted);
+}
+
+.turn-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   padding: 0.5rem 0.6rem;
   background: var(--osrs-panel-light);
   border: 1px solid var(--osrs-border);
   border-radius: var(--border-radius);
-  border-left: 3px solid var(--osrs-border);
-  animation: log-slide-in 0.2s ease-out;
 }
 
-.roll-entry__line1 {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.82rem;
-}
-
-.roll-entry__dot {
-  width: 8px;
-  height: 8px;
+.turn-indicator__dot {
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.roll-entry__team {
-  font-weight: 600;
-  color: var(--osrs-text-bright);
+.turn-indicator__label {
+  font-family: var(--font-display);
+  font-size: 0.42rem;
+  color: var(--osrs-text);
+  white-space: nowrap;
 }
 
-.roll-entry__verb {
+.turn-indicator__waiting {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-size: 0.38rem;
   color: var(--osrs-text-muted);
+  white-space: nowrap;
 }
 
-.roll-entry__roll {
+.nav-btn {
+  width: 100%;
+  padding: 0.5rem 0.9rem;
+  font-family: var(--font-display);
+  font-size: 0.42rem;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  border: 1px solid;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.nav-btn--roll {
+  background: var(--osrs-panel-light);
+  border-color: var(--osrs-border-gold);
   color: var(--osrs-gold);
 }
 
-.roll-entry__time {
-  margin-left: auto;
-  font-family: var(--font-display);
-  font-size: 0.36rem;
-  color: var(--osrs-text-muted);
+.nav-btn--roll:hover {
+  background: #3d2e00;
+  border-color: var(--osrs-gold);
+}
+
+.force-roll {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.force-roll__input {
+  width: 56px;
   flex-shrink: 0;
+  padding: 0.5rem 0.4rem;
+  font-family: var(--font-display);
+  font-size: 0.42rem;
+  background: var(--osrs-panel-light);
+  border: 1px solid var(--osrs-border);
+  border-radius: var(--border-radius);
+  color: var(--osrs-text);
+  text-align: center;
+  appearance: textfield;
+  -moz-appearance: textfield;
 }
 
-.roll-entry__line2 {
-  font-size: 0.78rem;
-  color: var(--osrs-text-muted);
-  padding-left: 1.75rem;
-  line-height: 1.4;
+.force-roll__input::-webkit-inner-spin-button,
+.force-roll__input::-webkit-outer-spin-button {
+  appearance: none;
 }
 
-.roll-entry__line2 strong {
+.force-roll__input:focus {
+  outline: none;
+  border-color: var(--osrs-border-gold);
+}
+
+.nav-btn--force {
+  flex: 1;
+  background: var(--osrs-panel-light);
+  border-color: var(--osrs-border-light);
   color: var(--osrs-text);
 }
 
-.roll-entry__dest {
-  color: var(--osrs-gold) !important;
+.nav-btn--force:hover {
+  background: var(--osrs-panel-hover);
+  border-color: var(--osrs-border-gold);
+  color: var(--osrs-gold);
 }
 
-.roll-entry__climb {
-  color: var(--osrs-green);
+.nav-btn--reset {
+  background: var(--osrs-panel-light);
+  border-color: var(--osrs-border);
+  color: var(--osrs-text-muted);
 }
 
-.roll-entry__climb strong {
-  color: var(--osrs-green) !important;
-}
-
-.roll-entry__fall {
+.nav-btn--reset:hover {
+  background: #3a1010;
+  border-color: var(--osrs-red);
   color: var(--osrs-red);
 }
 
-.roll-entry__fall strong {
-  color: var(--osrs-red) !important;
-}
-
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
-}
-
-@keyframes log-slide-in {
-  from { opacity: 0; transform: translateX(-8px); }
-  to   { opacity: 1; transform: translateX(0); }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
 </style>

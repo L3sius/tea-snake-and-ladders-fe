@@ -12,21 +12,46 @@ const team = computed(() => gameStore.state.teams.find((t) => t.id === props.eve
 
 const faceDots: Record<number, [number, number][]> = {
   1: [[50, 50]],
-  2: [[28, 28], [72, 72]],
-  3: [[28, 28], [50, 50], [72, 72]],
-  4: [[28, 28], [72, 28], [28, 72], [72, 72]],
-  5: [[28, 28], [72, 28], [50, 50], [28, 72], [72, 72]],
-  6: [[28, 28], [72, 28], [28, 50], [72, 50], [28, 72], [72, 72]],
+  2: [
+    [28, 28],
+    [72, 72],
+  ],
+  3: [
+    [28, 28],
+    [50, 50],
+    [72, 72],
+  ],
+  4: [
+    [28, 28],
+    [72, 28],
+    [28, 72],
+    [72, 72],
+  ],
+  5: [
+    [28, 28],
+    [72, 28],
+    [50, 50],
+    [28, 72],
+    [72, 72],
+  ],
+  6: [
+    [28, 28],
+    [72, 28],
+    [28, 50],
+    [72, 50],
+    [28, 72],
+    [72, 72],
+  ],
 }
 
 // Standard opposite pairs: 1↔6, 2↔5, 3↔4
 // CSS face position: front=1, back=6, right=3, left=4, top=2, bottom=5
 const faces = [
-  { cls: 'front',  num: 1 },
-  { cls: 'back',   num: 6 },
-  { cls: 'right',  num: 3 },
-  { cls: 'left',   num: 4 },
-  { cls: 'top',    num: 2 },
+  { cls: 'front', num: 1 },
+  { cls: 'back', num: 6 },
+  { cls: 'right', num: 3 },
+  { cls: 'left', num: 4 },
+  { cls: 'top', num: 2 },
   { cls: 'bottom', num: 5 },
 ]
 
@@ -51,11 +76,7 @@ const moveSummary = computed(() => {
 
       <div class="dice-scene">
         <div class="dice-cube" :class="`roll-to-${event.roll}`">
-          <div
-            v-for="face in faces"
-            :key="face.cls"
-            :class="`dice-face dice-face--${face.cls}`"
-          >
+          <div v-for="face in faces" :key="face.cls" :class="`dice-face dice-face--${face.cls}`">
             <svg viewBox="0 0 100 100" aria-hidden="true">
               <circle
                 v-for="([cx, cy], i) in faceDots[face.num]"
@@ -164,12 +185,24 @@ const moveSummary = computed(() => {
  *   face 5 → rotateX(810deg)   (720 + 90)
  *   face 6 → rotateY(900deg)   (720 + 180)
  */
-.dice-face--front  { transform: translateZ(55px); }
-.dice-face--back   { transform: rotateY(180deg)  translateZ(55px); }
-.dice-face--right  { transform: rotateY(90deg)   translateZ(55px); }
-.dice-face--left   { transform: rotateY(-90deg)  translateZ(55px); }
-.dice-face--top    { transform: rotateX(90deg)   translateZ(55px); }
-.dice-face--bottom { transform: rotateX(-90deg)  translateZ(55px); }
+.dice-face--front {
+  transform: translateZ(55px);
+}
+.dice-face--back {
+  transform: rotateY(180deg) translateZ(55px);
+}
+.dice-face--right {
+  transform: rotateY(90deg) translateZ(55px);
+}
+.dice-face--left {
+  transform: rotateY(-90deg) translateZ(55px);
+}
+.dice-face--top {
+  transform: rotateX(90deg) translateZ(55px);
+}
+.dice-face--bottom {
+  transform: rotateX(-90deg) translateZ(55px);
+}
 
 /* ── Roll animations ──
  * Only rotateX / rotateY — no rotateZ.
@@ -179,12 +212,24 @@ const moveSummary = computed(() => {
  * animation-timing-function: ease-out gives fast start → gradual stop.
  */
 
-.roll-to-1 { animation: roll-to-1 2.8s ease-out both; }
-.roll-to-2 { animation: roll-to-2 2.8s ease-out both; }
-.roll-to-3 { animation: roll-to-3 2.8s ease-out both; }
-.roll-to-4 { animation: roll-to-4 2.8s ease-out both; }
-.roll-to-5 { animation: roll-to-5 2.8s ease-out both; }
-.roll-to-6 { animation: roll-to-6 2.8s ease-out both; }
+.roll-to-1 {
+  animation: roll-to-1 2.8s ease-out both;
+}
+.roll-to-2 {
+  animation: roll-to-2 2.8s ease-out both;
+}
+.roll-to-3 {
+  animation: roll-to-3 2.8s ease-out both;
+}
+.roll-to-4 {
+  animation: roll-to-4 2.8s ease-out both;
+}
+.roll-to-5 {
+  animation: roll-to-5 2.8s ease-out both;
+}
+.roll-to-6 {
+  animation: roll-to-6 2.8s ease-out both;
+}
 
 /* Both axes move throughout — the die tumbles freely in 3D.
  * Final frame brings the correct face to front (no rotateZ anywhere).
@@ -192,57 +237,129 @@ const moveSummary = computed(() => {
  *             face4=X720 Y810, face5=X810 Y720, face6=X720 Y900     */
 
 @keyframes roll-to-1 {
-  0%   { transform: rotateX(0deg)   rotateY(0deg); }
-  20%  { transform: rotateX(320deg) rotateY(220deg); }
-  40%  { transform: rotateX(580deg) rotateY(470deg); }
-  60%  { transform: rotateX(672deg) rotateY(590deg); }
-  80%  { transform: rotateX(708deg) rotateY(665deg); }
-  100% { transform: rotateX(720deg) rotateY(720deg); }
+  0% {
+    transform: rotateX(0deg) rotateY(0deg);
+  }
+  20% {
+    transform: rotateX(320deg) rotateY(220deg);
+  }
+  40% {
+    transform: rotateX(580deg) rotateY(470deg);
+  }
+  60% {
+    transform: rotateX(672deg) rotateY(590deg);
+  }
+  80% {
+    transform: rotateX(708deg) rotateY(665deg);
+  }
+  100% {
+    transform: rotateX(720deg) rotateY(720deg);
+  }
 }
 
 @keyframes roll-to-2 {
-  0%   { transform: rotateX(0deg)   rotateY(0deg); }
-  20%  { transform: rotateX(260deg) rotateY(240deg); }
-  40%  { transform: rotateX(470deg) rotateY(490deg); }
-  60%  { transform: rotateX(560deg) rotateY(625deg); }
-  80%  { transform: rotateX(602deg) rotateY(692deg); }
-  100% { transform: rotateX(630deg) rotateY(720deg); }
+  0% {
+    transform: rotateX(0deg) rotateY(0deg);
+  }
+  20% {
+    transform: rotateX(260deg) rotateY(240deg);
+  }
+  40% {
+    transform: rotateX(470deg) rotateY(490deg);
+  }
+  60% {
+    transform: rotateX(560deg) rotateY(625deg);
+  }
+  80% {
+    transform: rotateX(602deg) rotateY(692deg);
+  }
+  100% {
+    transform: rotateX(630deg) rotateY(720deg);
+  }
 }
 
 @keyframes roll-to-3 {
-  0%   { transform: rotateX(0deg)   rotateY(0deg); }
-  20%  { transform: rotateX(230deg) rotateY(215deg); }
-  40%  { transform: rotateX(490deg) rotateY(450deg); }
-  60%  { transform: rotateX(641deg) rotateY(558deg); }
-  80%  { transform: rotateX(702deg) rotateY(602deg); }
-  100% { transform: rotateX(720deg) rotateY(630deg); }
+  0% {
+    transform: rotateX(0deg) rotateY(0deg);
+  }
+  20% {
+    transform: rotateX(230deg) rotateY(215deg);
+  }
+  40% {
+    transform: rotateX(490deg) rotateY(450deg);
+  }
+  60% {
+    transform: rotateX(641deg) rotateY(558deg);
+  }
+  80% {
+    transform: rotateX(702deg) rotateY(602deg);
+  }
+  100% {
+    transform: rotateX(720deg) rotateY(630deg);
+  }
 }
 
 @keyframes roll-to-4 {
-  0%   { transform: rotateX(0deg)   rotateY(0deg); }
-  20%  { transform: rotateX(250deg) rotateY(270deg); }
-  40%  { transform: rotateX(500deg) rotateY(540deg); }
-  60%  { transform: rotateX(645deg) rotateY(698deg); }
-  80%  { transform: rotateX(703deg) rotateY(764deg); }
-  100% { transform: rotateX(720deg) rotateY(810deg); }
+  0% {
+    transform: rotateX(0deg) rotateY(0deg);
+  }
+  20% {
+    transform: rotateX(250deg) rotateY(270deg);
+  }
+  40% {
+    transform: rotateX(500deg) rotateY(540deg);
+  }
+  60% {
+    transform: rotateX(645deg) rotateY(698deg);
+  }
+  80% {
+    transform: rotateX(703deg) rotateY(764deg);
+  }
+  100% {
+    transform: rotateX(720deg) rotateY(810deg);
+  }
 }
 
 @keyframes roll-to-5 {
-  0%   { transform: rotateX(0deg)   rotateY(0deg); }
-  20%  { transform: rotateX(285deg) rotateY(235deg); }
-  40%  { transform: rotateX(550deg) rotateY(485deg); }
-  60%  { transform: rotateX(699deg) rotateY(620deg); }
-  80%  { transform: rotateX(769deg) rotateY(692deg); }
-  100% { transform: rotateX(810deg) rotateY(720deg); }
+  0% {
+    transform: rotateX(0deg) rotateY(0deg);
+  }
+  20% {
+    transform: rotateX(285deg) rotateY(235deg);
+  }
+  40% {
+    transform: rotateX(550deg) rotateY(485deg);
+  }
+  60% {
+    transform: rotateX(699deg) rotateY(620deg);
+  }
+  80% {
+    transform: rotateX(769deg) rotateY(692deg);
+  }
+  100% {
+    transform: rotateX(810deg) rotateY(720deg);
+  }
 }
 
 @keyframes roll-to-6 {
-  0%   { transform: rotateX(0deg)   rotateY(0deg); }
-  20%  { transform: rotateX(255deg) rotateY(300deg); }
-  40%  { transform: rotateX(510deg) rotateY(600deg); }
-  60%  { transform: rotateX(651deg) rotateY(762deg); }
-  80%  { transform: rotateX(703deg) rotateY(851deg); }
-  100% { transform: rotateX(720deg) rotateY(900deg); }
+  0% {
+    transform: rotateX(0deg) rotateY(0deg);
+  }
+  20% {
+    transform: rotateX(255deg) rotateY(300deg);
+  }
+  40% {
+    transform: rotateX(510deg) rotateY(600deg);
+  }
+  60% {
+    transform: rotateX(651deg) rotateY(762deg);
+  }
+  80% {
+    transform: rotateX(703deg) rotateY(851deg);
+  }
+  100% {
+    transform: rotateX(720deg) rotateY(900deg);
+  }
 }
 
 .dice-roll-card__summary {
@@ -253,16 +370,32 @@ const moveSummary = computed(() => {
   animation: summary-reveal 0.4s ease-out 2.8s both;
 }
 
-.dice-roll-card__summary.snake  { color: var(--osrs-red); }
-.dice-roll-card__summary.ladder { color: var(--osrs-green); }
+.dice-roll-card__summary.snake {
+  color: var(--osrs-red);
+}
+.dice-roll-card__summary.ladder {
+  color: var(--osrs-green);
+}
 
 @keyframes card-pop {
-  from { transform: scale(0.85); opacity: 0; }
-  to   { transform: scale(1);    opacity: 1; }
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes summary-reveal {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

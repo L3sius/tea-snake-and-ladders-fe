@@ -1,23 +1,36 @@
 import type { BoardConfig } from '@/types'
 
 export const boardConfig: BoardConfig = {
-  columns: 9,
-  rows: 9,
-  totalTiles: 81,
+  columns: 10,
+  rows: 10,
+  totalTiles: 100,
   tiers: [
     { tier: 1, from: 1, to: 24 },
-    { tier: 2, from: 25, to: 51 },
-    { tier: 3, from: 52, to: 81 },
+    { tier: 2, from: 25, to: 70 },
+    { tier: 3, from: 71, to: 100 },
   ],
   snakes: [
+    { from: 98, to: 78 },
+    { from: 95, to: 75 },
+    { from: 93, to: 73 },
+    { from: 87, to: 24 },
+    { from: 64, to: 60 },
     { from: 62, to: 19 },
-    { from: 47, to: 28 },
-    { from: 74, to: 53 },
+    { from: 56, to: 53 },
+    { from: 49, to: 11 },
+    { from: 47, to: 26 },
+    { from: 16, to: 6 },
   ],
   ladders: [
     { from: 4, to: 14 },
-    { from: 33, to: 44 },
-    { from: 58, to: 71 },
+    { from: 9, to: 31 },
+    { from: 20, to: 38 },
+    { from: 21, to: 42 },
+    { from: 28, to: 84 },
+    { from: 36, to: 44 },
+    { from: 51, to: 67 },
+    { from: 71, to: 91 },
+    { from: 80, to: 100 },
   ],
 }
 

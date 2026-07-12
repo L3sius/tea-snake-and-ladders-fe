@@ -30,6 +30,12 @@ function handleClick() {
     @keydown.space.prevent="handleClick"
   >
     <span class="board-tile__number">{{ tile.id }}</span>
+    <img
+      v-if="tile.image"
+      :src="`/images/tiles/${tile.image}`"
+      :alt="tile.name"
+      class="board-tile__image"
+    />
   </div>
 </template>
 
@@ -69,5 +75,16 @@ function handleClick() {
   color: var(--tile-text, var(--osrs-text-muted));
   line-height: 1;
   user-select: none;
+  position: relative;
+  z-index: 1;
+}
+
+.board-tile__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.9;
 }
 </style>

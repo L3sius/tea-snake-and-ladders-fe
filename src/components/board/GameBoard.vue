@@ -28,17 +28,17 @@ const teamsByTile = computed(() => {
 // 3×2 grid offsets — supports up to 6 teams on the same tile without overlap
 const TOKEN_OFFSETS = [
   { x: -13, y: -9 },
-  { x:   0, y: -9 },
-  { x:  13, y: -9 },
-  { x: -13, y:  9 },
-  { x:   0, y:  9 },
-  { x:  13, y:  9 },
+  { x: 0, y: -9 },
+  { x: 13, y: -9 },
+  { x: -13, y: 9 },
+  { x: 0, y: 9 },
+  { x: 13, y: 9 },
 ]
 
 function tokenStyle(team: Team, teamIndex: number) {
   const pos = gameStore.state.displayedPositions[team.id] ?? team.position
   const { cx, cy } = getTileSvgCenter(pos)
-  const offset = TOKEN_OFFSETS[teamIndex % TOKEN_OFFSETS.length]
+  const offset = TOKEN_OFFSETS[teamIndex % TOKEN_OFFSETS.length]!
   const isSpecial = !!gameStore.state.specialMoving[team.id]
   return {
     left: `${cx}%`,
@@ -171,15 +171,27 @@ function closeModal() {
   width: 100%;
 }
 
+/* There's no navbar anymore — the only vertical chrome to account for is
+ * BoardView's own padding (2rem, top+bottom). No fixed max-width cap here —
+ * height and the column's own width already bound it to whatever actually
+ * fits, so a cap on top of those only ever makes it smaller for no reason. */
 .game-board {
   display: grid;
   grid-template-columns: repeat(var(--cols, 9), 1fr);
   grid-template-rows: repeat(var(--rows, 9), 1fr);
-  width: min(calc(100vh - 90px), 100%, 960px);
+  width: min(calc(100vh - 2rem), 100%);
   aspect-ratio: 1;
   border: 2px solid var(--osrs-border-light);
   background: var(--osrs-bg-alt);
   position: relative;
+}
+
+/* BoardView has no padding on mobile, but the bottom tab bar still eats
+ * into the viewport there. */
+@media (max-width: 768px) {
+  .game-board {
+    width: min(calc(100vh - var(--bottom-tabbar-height)), 100%, 960px);
+  }
 }
 
 .game-board__tile {

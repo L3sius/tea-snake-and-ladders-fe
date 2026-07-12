@@ -18,21 +18,27 @@ function connect() {
     try {
       const event: DiceRollEvent = JSON.parse(e.data)
       gameStore.applyDiceRoll(event)
-    } catch { /* malformed event — ignore */ }
+    } catch {
+      /* malformed event — ignore */
+    }
   })
 
   eventSource.addEventListener('board_updated', (e: MessageEvent) => {
     try {
       const teams: Team[] = JSON.parse(e.data)
       gameStore.setTeams(teams)
-    } catch { /* malformed event — ignore */ }
+    } catch {
+      /* malformed event — ignore */
+    }
   })
 
   eventSource.addEventListener('task_progress', (e: MessageEvent) => {
     try {
       const { teamId, tileId, dropsCollected } = JSON.parse(e.data)
       gameStore.updateTaskProgress(teamId, tileId, dropsCollected)
-    } catch { /* malformed event — ignore */ }
+    } catch {
+      /* malformed event — ignore */
+    }
   })
 
   eventSource.addEventListener('error', () => {
