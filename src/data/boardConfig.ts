@@ -11,7 +11,7 @@ export const boardConfig: BoardConfig = {
   ],
   snakes: [
     { from: 98, to: 78 },
-    { from: 95, to: 75 },
+    { from: 95, to: 73 },
     { from: 93, to: 73 },
     { from: 87, to: 24 },
     { from: 64, to: 60 },

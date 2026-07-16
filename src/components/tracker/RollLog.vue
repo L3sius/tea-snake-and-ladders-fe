@@ -204,7 +204,7 @@ function formatTime(date: Date): string {
 
 .tracker-empty {
   padding: 1rem;
-  font-size: 0.8rem;
+  font-size: 0.95rem;
   color: var(--osrs-text-muted);
   font-style: italic;
 }
@@ -223,7 +223,7 @@ function formatTime(date: Date): string {
   flex-shrink: 0;
   padding: 0.3rem 0.5rem;
   font-family: var(--font-display);
-  font-size: 0.4rem;
+  font-size: 0.5rem;
   color: var(--osrs-text);
   background: var(--osrs-panel-light);
   border: 1px solid var(--osrs-border);
@@ -250,7 +250,7 @@ function formatTime(date: Date): string {
   flex: 1;
   padding: 0.3rem 0.4rem;
   font-family: var(--font-display);
-  font-size: 0.4rem;
+  font-size: 0.5rem;
   text-align: center;
   color: var(--osrs-gold);
   background: var(--osrs-panel-light);
@@ -281,7 +281,7 @@ function formatTime(date: Date): string {
   align-items: center;
   gap: 0.3rem;
   padding: 0.25rem 0.5rem;
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   color: var(--osrs-text-muted);
   background: var(--osrs-panel-light);
   border: 1px solid var(--osrs-border);
@@ -324,7 +324,7 @@ function formatTime(date: Date): string {
   top: 0;
   padding: 0.3rem 0.75rem;
   font-family: var(--font-display);
-  font-size: 0.42rem;
+  font-size: 0.52rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--osrs-text-muted);
@@ -346,7 +346,7 @@ function formatTime(date: Date): string {
   flex-direction: column;
   gap: 0.25rem;
   padding: 0.5rem 0.6rem;
-  background: var(--osrs-panel-light);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--osrs-border);
   border-radius: var(--border-radius);
   border-left: 3px solid var(--osrs-border);
@@ -371,7 +371,7 @@ function formatTime(date: Date): string {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 0.82rem;
+  font-size: 0.98rem;
 }
 
 .roll-entry__dot {
@@ -397,13 +397,13 @@ function formatTime(date: Date): string {
 .roll-entry__time {
   margin-left: auto;
   font-family: var(--font-display);
-  font-size: 0.36rem;
+  font-size: 0.46rem;
   color: var(--osrs-text-muted);
   flex-shrink: 0;
 }
 
 .roll-entry__line2 {
-  font-size: 0.78rem;
+  font-size: 0.92rem;
   color: var(--osrs-text-muted);
   padding-left: 1.75rem;
   line-height: 1.4;
@@ -438,6 +438,7 @@ function formatTime(date: Date): string {
     opacity: 0;
     transform: translateX(-8px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);

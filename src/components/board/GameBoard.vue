@@ -135,7 +135,7 @@ function closeModal() {
           stroke-width="1.8"
           stroke-linecap="round"
           marker-end="url(#board-ladder-arrow)"
-          opacity="0.85"
+          opacity="0.2"
         />
 
         <line
@@ -149,7 +149,7 @@ function closeModal() {
           stroke-width="1.8"
           stroke-linecap="round"
           marker-end="url(#board-snake-arrow)"
-          opacity="0.85"
+          opacity="0.2"
         />
       </svg>
     </div>

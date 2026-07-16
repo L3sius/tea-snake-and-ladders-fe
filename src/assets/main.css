@@ -1,23 +1,32 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;500;700&display=swap');
 
 :root {
-  /* Core palette */
-  --osrs-bg: #1a1512;
-  --osrs-bg-alt: #141010;
-  --osrs-panel: #2c1e0f;
-  --osrs-panel-light: #3d2b16;
-  --osrs-panel-hover: #4a3520;
+  /* Core palette — shades of green throughout (the snake's colour), instead
+   * of the original treasure-brown, so the whole page reads as Snakes &
+   * Ladders rather than generic OSRS-gold. Each value below is a hue-rotated
+   * counterpart of its old brown, keeping the same lightness/contrast. */
+  --osrs-bg: #081208;
+  --osrs-bg-alt: #050a05;
+  /* Panels (Activity Tracker, Roll Log, Dev Tools) keep the page's previous,
+   * slightly lighter background tone — a fixed value, not tied to
+   * --osrs-bg, since the two were only meant to match once, not stay linked. */
+  --osrs-panel: #0f1a11;
+  --osrs-panel-light: #244a2c;
+  --osrs-panel-hover: #2f5c38;
 
   /* Borders */
-  --osrs-border: #6b4c1e;
-  --osrs-border-light: #c8a96e;
-  --osrs-border-gold: #ffd700;
+  --osrs-border: #3f6b3a;
+  --osrs-border-light: #a9d18a;
+  /* "Gold" is now the snake's own colour (see the board's snake SVG lines)
+   * so the page's primary accent visually ties back to snakes & ladders
+   * instead of an arbitrary treasure-gold. */
+  --osrs-border-gold: #27ae60;
 
   /* Text */
-  --osrs-text: #e8d5a3;
-  --osrs-text-muted: #9a8a6a;
-  --osrs-text-bright: #fff8e7;
-  --osrs-gold: #ffd700;
+  --osrs-text: #d7e8b3;
+  --osrs-text-muted: #93a37c;
+  --osrs-text-bright: #f2fbe9;
+  --osrs-gold: #27ae60;
   --osrs-red: #c0392b;
   --osrs-green: #27ae60;
   --osrs-blue: #2980b9;
@@ -26,9 +35,9 @@
   --tier1-bg: #1a3320;
   --tier1-border: #2ecc71;
   --tier1-text: #a8e6c0;
-  --tier2-bg: #1e1a38;
-  --tier2-border: #9b59b6;
-  --tier2-text: #c9b8e8;
+  --tier2-bg: #16223a;
+  --tier2-border: #3498db;
+  --tier2-text: #b8d4e8;
   --tier3-bg: #3a1010;
   --tier3-border: #e74c3c;
   --tier3-text: #f0a0a0;

@@ -84,7 +84,7 @@ const moveSummary = computed(() => {
                 :cx="cx"
                 :cy="cy"
                 r="9"
-                fill="#2c1e0f"
+                fill="#1b3320"
               />
             </svg>
           </div>
@@ -119,7 +119,7 @@ const moveSummary = computed(() => {
   border-radius: var(--border-radius);
   padding: 1.5rem 2rem;
   box-shadow:
-    0 0 40px rgba(255, 215, 0, 0.2),
+    0 0 40px rgba(39, 174, 96, 0.25),
     0 8px 32px rgba(0, 0, 0, 0.8);
   animation: card-pop 0.3s ease-out both;
 }
@@ -155,7 +155,7 @@ const moveSummary = computed(() => {
   position: absolute;
   width: 110px;
   height: 110px;
-  background: #fff8e7;
+  background: #f2fbe9;
   border-radius: 8px;
   box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.14);
 }

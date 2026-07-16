@@ -20,6 +20,12 @@ const tierLabel: Record<1 | 2 | 3, string> = {
   3: 'Tier 3 — Hard',
 }
 
+// The snake tiles' "image" is just a generic board-tile background filler,
+// not an actual reward — showing it in the modal would be misleading.
+const showImage = computed(
+  () => !!tile.value?.image && !tile.value.image.endsWith('/background.png'),
+)
+
 const teamsOnTile = computed<Team[]>(() => {
   if (!tile.value) return []
   return gameStore.state.teams.filter((t) => t.position === tile.value!.id)
@@ -59,7 +65,7 @@ function handleBackdropClick(e: MouseEvent) {
           <div class="modal__body">
             <div class="modal__task">
               <img
-                v-if="tile.image"
+                v-if="showImage"
                 :src="`/images/tiles/${tile.image}`"
                 :alt="tile.name"
                 class="modal__image"
@@ -196,13 +202,13 @@ function handleBackdropClick(e: MouseEvent) {
 
 .modal__image {
   flex-shrink: 0;
-  width: 110px;
-  height: 110px;
+  width: 210px;
+  height: 210px;
   object-fit: contain;
   border: 1px solid var(--osrs-border);
   border-radius: var(--border-radius);
   background: var(--osrs-bg);
-  padding: 6px;
+  padding: 8px;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
@@ -213,6 +219,20 @@ function handleBackdropClick(e: MouseEvent) {
   color: var(--osrs-text);
   line-height: 1.6;
   align-self: center;
+}
+
+/* The bigger image needs more room than it can share with the description
+ * text on a narrow phone screen — stack them instead of squeezing both
+ * into one row. */
+@media (max-width: 480px) {
+  .modal__task {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .modal__description {
+    align-self: stretch;
+  }
 }
 
 .modal__drops-info {

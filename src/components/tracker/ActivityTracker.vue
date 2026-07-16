@@ -69,6 +69,9 @@ function forceRoll() {
 }
 
 function resetTeams() {
+  if (!window.confirm('Reset the whole board? This clears every roll and all task progress.')) {
+    return
+  }
   gameStore.resetAll()
 }
 </script>
@@ -217,7 +220,7 @@ function resetTeams() {
   gap: 0.4rem;
   padding: 0.4rem 0.6rem;
   font-family: var(--font-display);
-  font-size: 0.42rem;
+  font-size: 0.52rem;
   color: var(--osrs-text-muted);
   background: transparent;
   border: 1px solid transparent;
@@ -274,7 +277,7 @@ function resetTeams() {
   align-items: baseline;
   gap: 0.3rem;
   padding: 0.28rem 0.75rem;
-  font-size: 0.78rem;
+  font-size: 0.95rem;
   border-bottom: 1px solid var(--osrs-border);
   line-height: 1.4;
 }
@@ -285,10 +288,10 @@ function resetTeams() {
 
 .live-entry__age {
   font-family: var(--font-display);
-  font-size: 0.36rem;
+  font-size: 0.46rem;
   color: var(--osrs-text-muted);
   flex-shrink: 0;
-  width: 2.2rem;
+  width: 2.6rem;
   text-align: right;
 }
 
@@ -315,18 +318,18 @@ function resetTeams() {
 
 .leaderboard-table__header {
   display: grid;
-  grid-template-columns: 32px 1fr 36px 36px;
+  grid-template-columns: 38px 1fr 42px 42px;
   gap: 0.4rem;
   padding: 0.3rem 0.5rem;
   font-family: var(--font-display);
-  font-size: 0.42rem;
+  font-size: 0.52rem;
   color: var(--osrs-text-muted);
   border-bottom: 1px solid var(--osrs-border);
 }
 
 .leaderboard-table__row {
   display: grid;
-  grid-template-columns: 32px 1fr 36px 36px;
+  grid-template-columns: 38px 1fr 42px 42px;
   gap: 0.4rem;
   align-items: center;
   width: 100%;
@@ -350,7 +353,7 @@ function resetTeams() {
 
 .rank-label {
   font-family: var(--font-display);
-  font-size: 0.45rem;
+  font-size: 0.55rem;
   color: var(--osrs-text-muted);
 }
 
@@ -372,7 +375,7 @@ function resetTeams() {
 }
 
 .team-cell__name {
-  font-size: 0.8rem;
+  font-size: 0.95rem;
   font-weight: 500;
   color: var(--osrs-text-bright);
   white-space: nowrap;
@@ -383,7 +386,7 @@ function resetTeams() {
 .tile-cell,
 .tasks-cell {
   font-family: var(--font-display);
-  font-size: 0.45rem;
+  font-size: 0.55rem;
   color: var(--osrs-text);
 }
 
@@ -396,7 +399,7 @@ function resetTeams() {
 }
 
 .dev-tools__notice {
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   color: var(--osrs-text-muted);
   font-style: italic;
   line-height: 1.5;
@@ -426,7 +429,7 @@ function resetTeams() {
 
 .status-label {
   font-family: var(--font-display);
-  font-size: 0.42rem;
+  font-size: 0.52rem;
   color: var(--osrs-text-muted);
 }
 
@@ -449,7 +452,7 @@ function resetTeams() {
 
 .turn-indicator__label {
   font-family: var(--font-display);
-  font-size: 0.42rem;
+  font-size: 0.52rem;
   color: var(--osrs-text);
   white-space: nowrap;
 }
@@ -457,7 +460,7 @@ function resetTeams() {
 .turn-indicator__waiting {
   margin-left: auto;
   font-family: var(--font-display);
-  font-size: 0.38rem;
+  font-size: 0.46rem;
   color: var(--osrs-text-muted);
   white-space: nowrap;
 }
@@ -466,7 +469,7 @@ function resetTeams() {
   width: 100%;
   padding: 0.5rem 0.9rem;
   font-family: var(--font-display);
-  font-size: 0.42rem;
+  font-size: 0.52rem;
   border-radius: var(--border-radius);
   cursor: pointer;
   border: 1px solid;
@@ -482,7 +485,7 @@ function resetTeams() {
 }
 
 .nav-btn--roll:hover {
-  background: #3d2e00;
+  background: #16382a;
   border-color: var(--osrs-gold);
 }
 
@@ -493,11 +496,11 @@ function resetTeams() {
 }
 
 .force-roll__input {
-  width: 56px;
+  width: 66px;
   flex-shrink: 0;
   padding: 0.5rem 0.4rem;
   font-family: var(--font-display);
-  font-size: 0.42rem;
+  font-size: 0.52rem;
   background: var(--osrs-panel-light);
   border: 1px solid var(--osrs-border);
   border-radius: var(--border-radius);
