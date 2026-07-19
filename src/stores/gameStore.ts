@@ -1,7 +1,7 @@
 import { reactive, nextTick } from 'vue'
-import { initialTeams } from '@/data/teams'
+import { fetchTeams, parseTeams } from '@/data/getTeams'
 import { boardConfig } from '@/data/boardConfig'
-import { buildMockHistory } from '@/data/mockHistory'
+import { fetchLogHistory, parseLogHistory } from '@/data/logHistory'
 import type { Team, DiceRollEvent, TeamTaskProgress, RollHistoryEntry } from '@/types'
 
 const OVERLAY_MS = 3500
@@ -22,10 +22,14 @@ interface GameState {
   historyIndex: number | null
 }
 
-// Seeded with two mock rounds already played, so the board and history
-// scrubber have something to test against without a live backend.
-const seededTeams = structuredClone(initialTeams)
-const { rollHistory: seededHistory } = buildMockHistory(seededTeams)
+// Roster from the (currently mocked) getTeams — kept unmutated as the
+// position-1 baseline snapshotPositions replays forward from.
+const baseTeams = parseTeams(fetchTeams())
+
+// Seeded from the (currently mocked) log_history — parseLogHistory also
+// advances each team's `position` to its true latest tile as a side effect.
+const seededTeams = structuredClone(baseTeams)
+const seededHistory = parseLogHistory(fetchLogHistory(), seededTeams)
 
 const state = reactive<GameState>({
   teams: seededTeams,
@@ -71,7 +75,7 @@ function glideTokenTo(teamId: string, target: number) {
 // stood on the board at that point.
 function snapshotPositions(rollsApplied: number): Record<string, number> {
   const positions: Record<string, number> = Object.fromEntries(
-    initialTeams.map((t) => [t.id, t.position]),
+    baseTeams.map((t) => [t.id, t.position]),
   )
   const chronological = [...state.rollHistory].reverse()
   for (let i = 0; i < rollsApplied; i++) {

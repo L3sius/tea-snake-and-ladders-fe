@@ -15,6 +15,20 @@ export interface TeamTaskProgress {
   dropsCollected: number
 }
 
+// A single RuneScape account's contribution.
+export interface PlayerAccount {
+  name: string
+  gold: number
+  items: number
+}
+
+// A real person, who may play on more than one account (mains + alts) —
+// their gold/items are the sum across every account they control.
+export interface TeamMember {
+  displayName: string
+  accounts: PlayerAccount[]
+}
+
 export interface Team {
   id: string
   name: string
@@ -22,7 +36,7 @@ export interface Team {
   color: string
   position: number
   taskProgress: TeamTaskProgress[]
-  members: string[]
+  members: TeamMember[]
 }
 
 export interface Snake {
@@ -62,5 +76,12 @@ export interface RollHistoryEntry {
   toPosition: number
   finalPosition: number
   snakeOrLadder?: { type: 'snake' | 'ladder' }
+  timestamp: Date
+}
+
+export interface ActivityEntry {
+  id: number
+  player: string
+  action: string
   timestamp: Date
 }

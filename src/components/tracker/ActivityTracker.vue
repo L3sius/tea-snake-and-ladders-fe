@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { gameStore } from '@/stores/gameStore'
-import { mockActivities } from '@/data/mockActivity'
+import { fetchLiveActivity, parseLiveActivity } from '@/data/liveActivity'
 import { formatRelativeTime } from '@/utils/formatRelativeTime'
+import { formatNumber } from '@/utils/formatNumber'
 import TeamToken from '@/components/board/TeamToken.vue'
 import RollLog from './RollLog.vue'
-import TeamModal from './TeamModal.vue'
-import type { Team } from '@/types'
+import type { Team, TeamMember } from '@/types'
 
 const props = defineProps<{
   // Desktop shows Roll Log as its own always-visible column instead —
@@ -14,8 +14,12 @@ const props = defineProps<{
   hideRollLogTab?: boolean
 }>()
 
-type Tab = 'live' | 'log' | 'leaderboard' | 'dev'
+type Tab = 'live' | 'log' | 'leaderboard' | 'stats' | 'dev'
 const activeTab = ref<Tab>('live')
+
+// --- Live Updates tab ---
+// TEMP: mocked until getLiveActivity exists — see liveActivity.ts.
+const liveActivity = parseLiveActivity(fetchLiveActivity())
 
 // --- Leaderboard tab ---
 const rankedTeams = computed(() =>
@@ -37,7 +41,103 @@ const rollsMadeByTeam = computed(() => {
   return counts
 })
 
-const selectedTeam = ref<Team | null>(null)
+// Leaderboard has no click-to-expand (it's meant to be fully visible at a
+// glance), so alts are just listed alongside the player's name instead.
+function altAccountNames(member: TeamMember): string[] {
+  return member.accounts.filter((a) => a.name !== member.displayName).map((a) => a.name)
+}
+
+// --- Stats tab ---
+// Rosters are capped at 8 players per team, so the full gold-sorted list is
+// always shown — no teaser/expand needed.
+interface TeamStats {
+  team: Team
+  gold: number
+  items: number
+  actions: number
+}
+
+// A player's gold/items is the sum across every account (main + alts) they
+// control — see PlayerAccount/TeamMember in types/index.ts.
+function memberTotals(member: TeamMember): { gold: number; items: number } {
+  return member.accounts.reduce(
+    (acc, a) => ({ gold: acc.gold + a.gold, items: acc.items + a.items }),
+    { gold: 0, items: 0 },
+  )
+}
+
+// POC: "actions generated" — counts liveActivity entries per player. Real
+// version will come from getGlobalStats pre-summed; for now this is derived
+// client-side from the mock feed, same pattern as rolls-made from
+// log_history. liveActivity's `player` may name an alt account rather than
+// the display name, so entries are attributed via the account -> owner map
+// below rather than a plain name match.
+const accountOwner = computed(() => {
+  const map = new Map<string, { teamId: string; displayName: string }>()
+  for (const team of gameStore.state.teams) {
+    for (const member of team.members) {
+      for (const account of member.accounts) {
+        map.set(account.name, { teamId: team.id, displayName: member.displayName })
+      }
+    }
+  }
+  return map
+})
+
+const actionsByMember = computed(() => {
+  const counts = new Map<string, number>() // keyed by memberKey(teamId, displayName)
+  for (const entry of liveActivity) {
+    const owner = accountOwner.value.get(entry.player)
+    if (!owner) continue
+    const key = memberKey(owner.teamId, owner.displayName)
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+  return counts
+})
+
+function memberActions(teamId: string, displayName: string): number {
+  return actionsByMember.value.get(memberKey(teamId, displayName)) ?? 0
+}
+
+const teamStats = computed<TeamStats[]>(() => {
+  return gameStore.state.teams
+    .map((team) => {
+      const totals = team.members.reduce(
+        (acc, m) => {
+          const member = memberTotals(m)
+          return {
+            gold: acc.gold + member.gold,
+            items: acc.items + member.items,
+            actions: acc.actions + memberActions(team.id, m.displayName),
+          }
+        },
+        { gold: 0, items: 0, actions: 0 },
+      )
+      return { team, gold: totals.gold, items: totals.items, actions: totals.actions }
+    })
+    .sort((a, b) => b.gold - a.gold)
+})
+
+const grandTotals = computed(() =>
+  teamStats.value.reduce(
+    (acc, t) => ({
+      gold: acc.gold + t.gold,
+      items: acc.items + t.items,
+      actions: acc.actions + t.actions,
+    }),
+    { gold: 0, items: 0, actions: 0 },
+  ),
+)
+
+function sortedMembers(team: Team) {
+  return [...team.members].sort((a, b) => memberTotals(b).gold - memberTotals(a).gold)
+}
+
+// Scoped to a team, since display names aren't globally unique — used to key
+// the actionsByMember lookup above.
+function memberKey(teamId: string, displayName: string): string {
+  return `${teamId}::${displayName}`
+}
 
 // --- Dev Tools tab ---
 // Temporary: stands in for real dice rolls until the backend drives them.
@@ -79,34 +179,23 @@ function resetTeams() {
 <template>
   <div class="activity-tracker osrs-panel">
     <div class="tracker-tabs">
-      <button
-        class="tracker-tab"
-        :class="{ 'tracker-tab--active': activeTab === 'live' }"
-        @click="activeTab = 'live'"
-      >
+      <button class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'live' }" @click="activeTab = 'live'">
         <span class="tracker-tab__live-dot" />
         Live Updates
       </button>
-      <button
-        v-if="!props.hideRollLogTab"
-        class="tracker-tab"
-        :class="{ 'tracker-tab--active': activeTab === 'log' }"
-        @click="activeTab = 'log'"
-      >
+      <button v-if="!props.hideRollLogTab" class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'log' }"
+        @click="activeTab = 'log'">
         Roll Log
       </button>
-      <button
-        class="tracker-tab"
-        :class="{ 'tracker-tab--active': activeTab === 'leaderboard' }"
-        @click="activeTab = 'leaderboard'"
-      >
+      <button class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'leaderboard' }"
+        @click="activeTab = 'leaderboard'">
         Leaderboard
       </button>
-      <button
-        class="tracker-tab"
-        :class="{ 'tracker-tab--active': activeTab === 'dev' }"
-        @click="activeTab = 'dev'"
-      >
+      <button class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'stats' }"
+        @click="activeTab = 'stats'">
+        Stats
+      </button>
+      <button class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'dev' }" @click="activeTab = 'dev'">
         Dev Tools
       </button>
     </div>
@@ -114,7 +203,7 @@ function resetTeams() {
     <div class="tracker-body">
       <!-- Live Updates -->
       <ul v-if="activeTab === 'live'" class="live-list">
-        <li v-for="entry in mockActivities" :key="entry.id" class="live-entry">
+        <li v-for="entry in liveActivity" :key="entry.id" class="live-entry">
           <span class="live-entry__age">{{ formatRelativeTime(entry.timestamp) }}</span>
           <span class="live-entry__player">{{ entry.player }}</span>
           <span class="live-entry__action"> {{ entry.action }}</span>
@@ -128,28 +217,99 @@ function resetTeams() {
       <div v-else-if="activeTab === 'leaderboard'" class="leaderboard-table">
         <div class="leaderboard-table__header">
           <span>Rank</span>
-          <span>Team Name</span>
-          <span>Tile</span>
-          <span>Rolls</span>
+          <span class="stats-table__header-name">Team Name</span>
+          <span class="stats-table__header-num">Tile</span>
+          <span class="stats-table__header-num">Rolls</span>
         </div>
 
-        <button
-          v-for="(team, index) in rankedTeams"
-          :key="team.id"
-          class="leaderboard-table__row"
-          :class="{ 'leaderboard-table__row--top': index < 3 }"
-          @click="selectedTeam = team"
-        >
-          <span class="rank-label" :class="`rank-label--${index + 1}`">
-            {{ rankLabel(index) }}
-          </span>
-          <div class="team-cell">
-            <TeamToken :team="team" size="sm" />
-            <span class="team-cell__name">{{ team.name }}</span>
+        <div v-for="(team, index) in rankedTeams" :key="team.id" class="stats-team">
+          <div class="leaderboard-table__row leaderboard-table__row--static"
+            :class="{ 'leaderboard-table__row--top': index < 3 }">
+            <span class="rank-label" :class="`rank-label--${index + 1}`">
+              {{ rankLabel(index) }}
+            </span>
+            <div class="team-cell">
+              <TeamToken :team="team" size="sm" />
+              <span class="team-cell__name">{{ team.name }}</span>
+            </div>
+            <span class="tile-cell">{{ team.position }}</span>
+            <span class="tasks-cell">{{ rollsMadeByTeam.get(team.id) ?? 0 }}</span>
           </div>
-          <span class="tile-cell">{{ team.position }}</span>
-          <span class="tasks-cell">{{ rollsMadeByTeam.get(team.id) ?? 0 }}</span>
-        </button>
+
+          <ul class="stats-members">
+            <li v-for="member in team.members" :key="member.displayName" class="leaderboard-member">
+              {{ member.displayName }}
+              <span v-if="altAccountNames(member).length > 0" class="leaderboard-member__alts">
+                (alt{{ altAccountNames(member).length > 1 ? 's' : '' }}:
+                {{ altAccountNames(member).join(', ') }})
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div v-else-if="activeTab === 'stats'" class="stats-panel">
+        <div class="stats-summary">
+          <div class="stats-summary__stat">
+            <span class="stats-summary__value">{{ formatNumber(grandTotals.gold) }}</span>
+            <span class="stats-summary__label">Event Gold</span>
+          </div>
+          <div class="stats-summary__stat">
+            <span class="stats-summary__value">{{ formatNumber(grandTotals.items) }}</span>
+            <span class="stats-summary__label">Event Items</span>
+          </div>
+          <div class="stats-summary__stat">
+            <span class="stats-summary__value">{{ formatNumber(grandTotals.actions) }}</span>
+            <span class="stats-summary__label">Actions Taken</span>
+          </div>
+        </div>
+
+        <div class="leaderboard-table">
+          <div class="leaderboard-table__header stats-table__header">
+            <span>Rank</span>
+            <span class="stats-table__header-name">Team Name</span>
+            <span class="stats-table__header-num">Gold</span>
+            <span class="stats-table__header-num">Items</span>
+            <span class="stats-table__header-num">Actions</span>
+          </div>
+
+          <div v-for="(stat, index) in teamStats" :key="stat.team.id" class="stats-team">
+            <div class="leaderboard-table__row stats-table__row leaderboard-table__row--static"
+              :class="{ 'leaderboard-table__row--top': index < 3 }">
+              <span class="rank-label" :class="`rank-label--${index + 1}`">
+                {{ rankLabel(index) }}
+              </span>
+              <div class="team-cell">
+                <TeamToken :team="stat.team" size="sm" />
+                <span class="team-cell__name">{{ stat.team.name }}</span>
+              </div>
+              <span class="tile-cell">{{ formatNumber(stat.gold) }}</span>
+              <span class="tasks-cell">{{ formatNumber(stat.items) }}</span>
+              <span class="tasks-cell">{{ formatNumber(stat.actions) }}</span>
+            </div>
+
+            <ul class="stats-members">
+              <li v-for="member in sortedMembers(stat.team)" :key="member.displayName" class="stats-member">
+                <span class="stats-member__name">
+                  {{ member.displayName }}
+                  <span v-if="altAccountNames(member).length > 0" class="stats-member__alts">
+                    (+{{ altAccountNames(member).join(', ') }})
+                  </span>
+                </span>
+                <span class="stats-member__stat">{{
+                  formatNumber(memberTotals(member).gold)
+                  }}</span>
+                <span class="stats-member__stat">{{
+                  formatNumber(memberTotals(member).items)
+                  }}</span>
+                <span class="stats-member__stat">{{
+                  formatNumber(memberActions(stat.team.id, member.displayName))
+                  }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
 
       <!-- Dev Tools -->
@@ -160,10 +320,7 @@ function resetTeams() {
         </p>
 
         <div class="dev-tools__status">
-          <span
-            class="status-dot"
-            :class="connected ? 'status-dot--live' : 'status-dot--offline'"
-          />
+          <span class="status-dot" :class="connected ? 'status-dot--live' : 'status-dot--offline'" />
           <span class="status-label">{{ connected ? 'LIVE' : 'OFFLINE' }}</span>
         </div>
 
@@ -176,22 +333,14 @@ function resetTeams() {
         <button class="nav-btn nav-btn--roll" @click="rollDice">Roll Dice</button>
 
         <div class="force-roll">
-          <input
-            v-model.number="forcedRoll"
-            type="number"
-            min="1"
-            max="6"
-            placeholder="1-6"
-            class="force-roll__input"
-          />
+          <input v-model.number="forcedRoll" type="number" min="1" max="6" placeholder="1-6"
+            class="force-roll__input" />
           <button class="nav-btn nav-btn--force" @click="forceRoll">Force</button>
         </div>
 
         <button class="nav-btn nav-btn--reset" @click="resetTeams">Reset</button>
       </div>
     </div>
-
-    <TeamModal :team="selectedTeam" @close="selectedTeam = null" />
   </div>
 </template>
 
@@ -318,7 +467,7 @@ function resetTeams() {
 
 .leaderboard-table__header {
   display: grid;
-  grid-template-columns: 38px 1fr 42px 42px;
+  grid-template-columns: 38px 1fr 50px 50px;
   gap: 0.4rem;
   padding: 0.3rem 0.5rem;
   font-family: var(--font-display);
@@ -327,9 +476,29 @@ function resetTeams() {
   border-bottom: 1px solid var(--osrs-border);
 }
 
+/* A divider line rather than relying on right-aligned text spacing — a
+ * fixed border + padding-left gives a consistent gap after each divider
+ * regardless of the column's width, unlike right-aligning words of
+ * different lengths into columns of different widths (which was the
+ * previous "smushed" look on the narrower columns). */
+.stats-table__header-num {
+  text-align: right;
+}
+
+/* Grid items default to min-width: auto, which floors this cell at its own
+ * text's min-content width — same fix as .team-cell below, but that one
+ * only covers the value rows, not this header label. Without it, the
+ * header can overflow its container even when the row underneath doesn't. */
+.stats-table__header-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .leaderboard-table__row {
   display: grid;
-  grid-template-columns: 38px 1fr 42px 42px;
+  grid-template-columns: 38px 1fr 50px 50px;
   gap: 0.4rem;
   align-items: center;
   width: 100%;
@@ -351,18 +520,141 @@ function resetTeams() {
   border-color: var(--osrs-border-gold);
 }
 
+/* Leaderboard rows are display-only now (members list underneath instead of
+ * a click-to-open modal) — cancel the clickable cursor/hover the shared
+ * .leaderboard-table__row styling implies. */
+.leaderboard-table__row--static {
+  cursor: default;
+}
+
+.leaderboard-table__row--static:hover {
+  border-color: var(--osrs-border);
+}
+
+.leaderboard-member {
+  padding: 0.3rem 0.5rem;
+  font-size: 1.1rem;
+  color: var(--osrs-text-muted);
+  background: var(--osrs-panel-hover);
+  border-radius: var(--border-radius);
+}
+
+.leaderboard-member__alts {
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--osrs-text-muted);
+  opacity: 0.75;
+}
+
+/* ── Stats ──
+ * Reuses the leaderboard table styles (same shape of data: rank, team,
+ * numeric columns) but the Gold column needs more room than a tile
+ * number or roll count ever did. */
+.stats-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.stats-summary {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.4rem 0.5rem 0;
+}
+
+.stats-summary__stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.75rem 0.5rem;
+  background: var(--osrs-panel-light);
+  border: 1px solid var(--osrs-border-gold);
+  border-radius: var(--border-radius);
+}
+
+.stats-summary__value {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--osrs-gold);
+}
+
+.stats-summary__label {
+  font-family: var(--font-display);
+  font-size: 0.4rem;
+  color: var(--osrs-text-muted);
+  text-transform: uppercase;
+}
+
+.stats-table__header,
+.stats-table__row {
+  grid-template-columns: 38px 1fr 85px 55px 55px;
+}
+
+.stats-team {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stats-members {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.stats-member {
+  display: grid;
+  /* Matches the gold/items/actions column widths on .stats-table__row above,
+   * so the numbers line up vertically between team and member rows. */
+  grid-template-columns: 1fr 85px 55px 55px;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.3rem 0.5rem;
+  background: var(--osrs-panel-hover);
+  border-radius: var(--border-radius);
+}
+
+.stats-member__name {
+  font-size: 0.8rem;
+  color: var(--osrs-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-member__alts {
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--osrs-text-muted);
+  opacity: 0.75;
+}
+
+.stats-member__stat {
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  color: var(--osrs-text);
+  text-align: right;
+  white-space: nowrap;
+}
+
 .rank-label {
   font-family: var(--font-display);
   font-size: 0.55rem;
+  text-align: center;
   color: var(--osrs-text-muted);
 }
 
 .rank-label--1 {
   color: var(--osrs-gold);
 }
+
 .rank-label--2 {
   color: #c0c0c0;
 }
+
 .rank-label--3 {
   color: #cd7f32;
 }
@@ -375,7 +667,7 @@ function resetTeams() {
 }
 
 .team-cell__name {
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   font-weight: 500;
   color: var(--osrs-text-bright);
   white-space: nowrap;
@@ -386,8 +678,10 @@ function resetTeams() {
 .tile-cell,
 .tasks-cell {
   font-family: var(--font-display);
-  font-size: 0.55rem;
+  font-size: 0.6rem;
   color: var(--osrs-text);
+  text-align: right;
+  white-space: nowrap;
 }
 
 /* ── Dev Tools ── */
@@ -546,10 +840,12 @@ function resetTeams() {
 }
 
 @keyframes pulse {
+
   0%,
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.35;
   }

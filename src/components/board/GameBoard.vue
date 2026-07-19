@@ -25,25 +25,33 @@ const teamsByTile = computed(() => {
   return map
 })
 
-// 3×2 grid offsets — supports up to 6 teams on the same tile without overlap
-const TOKEN_OFFSETS = [
-  { x: -13, y: -9 },
-  { x: 0, y: -9 },
-  { x: 13, y: -9 },
-  { x: -13, y: 9 },
-  { x: 0, y: 9 },
-  { x: 13, y: 9 },
-]
+// Token size as a fraction of one tile's width — relative to the board, not
+// a fixed px, so it stays proportionate whether the board renders small
+// (mobile) or large (desktop, now that it has no max-width cap).
+const TOKEN_SIZE_FRACTION = 0.62
+const TOKEN_SIZE_PERCENT = (100 / boardConfig.columns) * TOKEN_SIZE_FRACTION
 
-function tokenStyle(team: Team, teamIndex: number) {
+// Teams sharing a tile line up in a row, heavily overlapping — only a
+// sliver of each token peeks out from behind the next — instead of being
+// pinned to fixed grid slots. Also fixes a bug where offsets were keyed off
+// each team's position in the *global* team list rather than its position
+// among the teams actually sharing that tile.
+const TOKEN_OVERLAP_STEP = 0.14
+
+function tokenStyle(team: Team) {
   const pos = gameStore.state.displayedPositions[team.id] ?? team.position
   const { cx, cy } = getTileSvgCenter(pos)
-  const offset = TOKEN_OFFSETS[teamIndex % TOKEN_OFFSETS.length]!
+  const tileTeams = teamsByTile.value.get(pos) ?? [team]
+  const indexInTile = tileTeams.findIndex((t) => t.id === team.id)
+  const centeredIndex = indexInTile - (tileTeams.length - 1) / 2
+  const offsetXPercent = centeredIndex * TOKEN_OVERLAP_STEP * 100
   const isSpecial = !!gameStore.state.specialMoving[team.id]
   return {
     left: `${cx}%`,
     top: `${cy}%`,
-    transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))`,
+    width: `${TOKEN_SIZE_PERCENT}%`,
+    height: `${TOKEN_SIZE_PERCENT}%`,
+    transform: `translate(calc(-50% + ${offsetXPercent}%), -50%)`,
     transition: isSpecial
       ? `left ${SPECIAL_TRANSITION_MS}ms cubic-bezier(0.4, 0, 0.2, 1), top ${SPECIAL_TRANSITION_MS}ms cubic-bezier(0.4, 0, 0.2, 1)`
       : 'left 0.22s ease, top 0.22s ease',
@@ -84,12 +92,12 @@ function closeModal() {
       <!-- Token overlay — absolutely positioned over the grid, z-index above SVG lines -->
       <div class="token-overlay" aria-hidden="true">
         <div
-          v-for="(team, index) in teams"
+          v-for="team in teams"
           :key="team.id"
           class="token-overlay__token"
-          :style="tokenStyle(team, index)"
+          :style="tokenStyle(team)"
         >
-          <TeamToken :team="team" size="sm" />
+          <TeamToken :team="team" size="sm" :style="{ width: '100%', height: '100%' }" />
         </div>
       </div>
 

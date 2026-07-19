@@ -80,7 +80,7 @@ function handleBackdropClick(e: MouseEvent) {
             <div v-if="teamsOnTile.length > 0" class="modal__teams">
               <h3 class="modal__section-title">Teams on this tile</h3>
               <div v-for="team in teamsOnTile" :key="team.id" class="modal__team-row">
-                <TeamToken :team="team" size="md" />
+                <TeamToken :team="team" size="lg" />
                 <div class="modal__team-info">
                   <span class="modal__team-name">{{ team.name }}</span>
                   <div class="modal__progress-row">
@@ -126,14 +126,14 @@ function handleBackdropClick(e: MouseEvent) {
   border: 2px solid var(--osrs-border-light);
   border-radius: var(--border-radius);
   width: 100%;
-  max-width: 480px;
+  max-width: 720px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
 }
 
 .modal__header {
-  padding: 1rem;
+  padding: 1.5rem;
   border-bottom: 1px solid var(--tile-border, var(--osrs-border));
   background: var(--tile-bg, var(--osrs-panel-light));
 }
@@ -142,12 +142,12 @@ function handleBackdropClick(e: MouseEvent) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .modal__tier-badge {
   font-family: var(--font-display);
-  font-size: 0.5rem;
+  font-size: 0.65rem;
   color: var(--tile-text, var(--osrs-text-muted));
 }
 
@@ -156,9 +156,9 @@ function handleBackdropClick(e: MouseEvent) {
   border: 1px solid var(--osrs-border);
   color: var(--osrs-text-muted);
   cursor: pointer;
-  padding: 0.2rem 0.5rem;
+  padding: 0.3rem 0.7rem;
   border-radius: var(--border-radius);
-  font-size: 0.75rem;
+  font-size: 0.95rem;
   transition:
     color var(--transition-fast),
     border-color var(--transition-fast);
@@ -171,7 +171,7 @@ function handleBackdropClick(e: MouseEvent) {
 
 .modal__title {
   font-family: var(--font-display);
-  font-size: 0.7rem;
+  font-size: 0.95rem;
   color: var(--osrs-gold);
   line-height: 1.4;
 }
@@ -182,49 +182,49 @@ function handleBackdropClick(e: MouseEvent) {
 }
 
 .modal__skill {
-  margin-top: 0.25rem;
-  font-size: 0.8rem;
+  margin-top: 0.35rem;
+  font-size: 1rem;
   color: var(--tile-text, var(--osrs-text-muted));
 }
 
 .modal__body {
-  padding: 1rem;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .modal__task {
   display: flex;
   align-items: flex-start;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .modal__image {
   flex-shrink: 0;
-  width: 210px;
-  height: 210px;
+  width: 300px;
+  height: 300px;
   object-fit: contain;
   border: 1px solid var(--osrs-border);
   border-radius: var(--border-radius);
   background: var(--osrs-bg);
-  padding: 8px;
+  padding: 10px;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
 
 .modal__description {
   flex: 1;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   color: var(--osrs-text);
   line-height: 1.6;
   align-self: center;
 }
 
 /* The bigger image needs more room than it can share with the description
- * text on a narrow phone screen — stack them instead of squeezing both
- * into one row. */
-@media (max-width: 480px) {
+ * text on a narrower screen — stack them instead of squeezing both into
+ * one row. Raised from 480px since the modal itself is much wider now. */
+@media (max-width: 680px) {
   .modal__task {
     flex-direction: column;
     align-items: center;
@@ -236,32 +236,32 @@ function handleBackdropClick(e: MouseEvent) {
 }
 
 .modal__drops-info {
-  font-size: 0.85rem;
+  font-size: 1rem;
   color: var(--osrs-gold);
-  padding: 0.5rem;
+  padding: 0.65rem;
   background: var(--osrs-panel-light);
   border-left: 3px solid var(--osrs-border-gold);
 }
 
 .modal__section-title {
   font-family: var(--font-display);
-  font-size: 0.55rem;
+  font-size: 0.7rem;
   color: var(--osrs-text-muted);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.6rem;
   text-transform: uppercase;
 }
 
 .modal__teams {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.4rem;
 }
 
 .modal__team-row {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem;
+  gap: 1rem;
+  padding: 0.75rem;
   background: var(--osrs-panel-light);
   border: 1px solid var(--osrs-border);
   border-radius: var(--border-radius);
@@ -271,11 +271,11 @@ function handleBackdropClick(e: MouseEvent) {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.4rem;
 }
 
 .modal__team-name {
-  font-size: 0.85rem;
+  font-size: 1.05rem;
   font-weight: 500;
   color: var(--osrs-text-bright);
 }
@@ -283,12 +283,12 @@ function handleBackdropClick(e: MouseEvent) {
 .modal__progress-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
 .modal__progress-bar-wrap {
   flex: 1;
-  height: 12px;
+  height: 16px;
   background: var(--osrs-bg);
   border: 1px solid var(--osrs-border);
   border-radius: 1px;
@@ -306,13 +306,13 @@ function handleBackdropClick(e: MouseEvent) {
 .modal__progress-label {
   flex-shrink: 0;
   font-family: var(--font-display);
-  font-size: 0.45rem;
+  font-size: 0.55rem;
   color: var(--osrs-text-muted);
   white-space: nowrap;
 }
 
 .modal__no-teams {
-  font-size: 0.85rem;
+  font-size: 1rem;
   color: var(--osrs-text-muted);
   font-style: italic;
 }

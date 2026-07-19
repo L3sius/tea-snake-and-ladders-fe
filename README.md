@@ -62,8 +62,13 @@ src/
 │       └── ActivityTracker.vue  # Left sidebar — Live Updates + Roll Log tabs
 ├── data/
 │   ├── boardConfig.ts           # Board dimensions, tier ranges, snakes & ladders, grid helpers
-│   ├── mockActivity.ts          # 1 000 mock OSRS activity feed entries
-│   ├── teams.ts                 # Initial team list (update before event)
+│   ├── mockGetTeams.json        # Mock getTeams response (id/name/members) — swap for the real endpoint later
+│   ├── getTeams.ts              # Parses the getTeams response into Team[]
+│   ├── teamPresentation.ts      # Frontend-owned color/logo per team id (never sent by getTeams)
+│   ├── mockLogHistory.json      # Mock log_history response — swap for the real endpoint later
+│   ├── logHistory.ts            # Parses log_history into RollHistoryEntry[] and team positions
+│   ├── mockLiveActivity.json    # Mock getLiveActivity response — swap for the real endpoint later
+│   ├── liveActivity.ts          # Parses getLiveActivity into ActivityEntry[]
 │   └── tiles.ts                 # Tile definitions — add task names/descriptions here
 ├── router/
 │   └── index.ts
@@ -94,17 +99,24 @@ src/
 
 ### Teams
 
-Edit `src/data/teams.ts`. Each team needs:
+Roster (id, name, members/accounts) comes from the `getTeams` endpoint — mocked in
+`src/data/mockGetTeams.json` until the real backend exists. Edit that file to add real teams:
+
+```json
+{
+  "id": 1,
+  "name": "Actual Team Name",
+  "members": [
+    { "displayName": "PlayerOne", "accounts": [{ "name": "PlayerOne", "gold": 0, "items": 0 }] }
+  ]
+}
+```
+
+Color and logo are frontend-owned and not part of `getTeams` — set them per team id in
+`src/data/teamPresentation.ts`:
 
 ```ts
-{
-  id: 'team-1',
-  name: 'Actual Team Name',
-  logoPath: '/images/teams/team1.png',  // place PNG in public/images/teams/
-  color: '#e74c3c',                     // hex colour for the token border & log dot
-  position: 1,
-  taskProgress: [],
-}
+1: { color: '#e74c3c', logoPath: '/images/teams/team1.png' },  // place PNG in public/images/teams/
 ```
 
 ### Tiles / tasks

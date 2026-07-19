@@ -34,11 +34,20 @@ import RollLog from '@/components/tracker/RollLog.vue'
    * (flex-basis wins over width whenever it isn't `auto`), so the flex
    * shorthand has to be reset here explicitly or all three columns end up
    * splitting the row evenly regardless of this width. */
-  flex: 0 0 20%;
   position: sticky;
   top: 1rem;
   display: flex;
   height: calc(100vh - 2rem);
+}
+
+.board-view__tracker {
+  /* Wider than the roll log — the Stats tab's Gold/Items/Actions table needs
+   * the extra room to keep its headers from feeling cramped. */
+  flex: 0 0 25%;
+}
+
+.board-view__rolllog {
+  flex: 0 0 20%;
 }
 
 .board-view__main {
