@@ -14,7 +14,7 @@ const props = defineProps<{
   hideRollLogTab?: boolean
 }>()
 
-type Tab = 'live' | 'log' | 'leaderboard' | 'stats' | 'dev'
+type Tab = 'live' | 'log' | 'leaderboard' | 'stats' | 'roll'
 const activeTab = ref<Tab>('live')
 
 // --- Live Updates tab ---
@@ -139,64 +139,81 @@ function memberKey(teamId: string, displayName: string): string {
   return `${teamId}::${displayName}`
 }
 
-// --- Dev Tools tab ---
-// Temporary: stands in for real dice rolls until the backend drives them.
-const connected = computed(() => gameStore.state.connected)
-const currentTeam = computed(() => gameStore.state.teams[gameStore.state.currentTeamIndex])
-const forcedRoll = ref<number | null>(null)
+// --- Roll Dice tab ---
+// This is the real dice-roll trigger — any team can roll anytime, no
+// authorization, picked here from the team tabs. A real backend would
+// reject a roll for a team that hasn't completed its current tile's task;
+// this mock never checks that.
+const selectedTeamId = ref(gameStore.state.teams[0]?.id ?? '')
+const selectedTeam = computed(() =>
+  gameStore.state.teams.find((t) => t.id === selectedTeamId.value),
+)
 
-const tick = ref(0)
-let tickInterval: ReturnType<typeof setInterval> | undefined
+// Ticks while mounted so the cooldown countdown below stays live.
+const now = ref(Date.now())
+let cooldownInterval: ReturnType<typeof setInterval> | undefined
 onMounted(() => {
-  tickInterval = setInterval(() => tick.value++, 60_000)
+  cooldownInterval = setInterval(() => {
+    now.value = Date.now()
+  }, 200)
 })
 onUnmounted(() => {
-  clearInterval(tickInterval)
+  clearInterval(cooldownInterval)
 })
 
-const waitingLabel = computed(() => {
-  void tick.value
-  const lastRoll = gameStore.state.rollHistory[0]
-  return lastRoll ? `waiting ${formatRelativeTime(lastRoll.timestamp)}` : null
+// Anti-spam cooldown is global (any roll locks out every team), not just
+// the selected one — see rollCooldownUntil in gameStore.
+const cooldownSecondsLeft = computed(() => {
+  const until = gameStore.state.rollCooldownUntil
+  if (until === null) return 0
+  return Math.max(0, Math.ceil((until - now.value) / 1000))
 })
+const onCooldown = computed(() => cooldownSecondsLeft.value > 0)
 
 function rollDice() {
-  gameStore.rollForCurrentTeam()
-}
-
-function forceRoll() {
-  gameStore.rollForCurrentTeam(forcedRoll.value ?? undefined)
-}
-
-function resetTeams() {
-  if (!window.confirm('Reset the whole board? This clears every roll and all task progress.')) {
-    return
-  }
-  gameStore.resetAll()
+  gameStore.rollForTeam(selectedTeamId.value)
 }
 </script>
 
 <template>
   <div class="activity-tracker osrs-panel">
     <div class="tracker-tabs">
-      <button class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'live' }" @click="activeTab = 'live'">
+      <button
+        class="tracker-tab"
+        :class="{ 'tracker-tab--active': activeTab === 'live' }"
+        @click="activeTab = 'live'"
+      >
         <span class="tracker-tab__live-dot" />
         Live Updates
       </button>
-      <button v-if="!props.hideRollLogTab" class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'log' }"
-        @click="activeTab = 'log'">
+      <button
+        v-if="!props.hideRollLogTab"
+        class="tracker-tab"
+        :class="{ 'tracker-tab--active': activeTab === 'log' }"
+        @click="activeTab = 'log'"
+      >
         Roll Log
       </button>
-      <button class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'leaderboard' }"
-        @click="activeTab = 'leaderboard'">
+      <button
+        class="tracker-tab"
+        :class="{ 'tracker-tab--active': activeTab === 'leaderboard' }"
+        @click="activeTab = 'leaderboard'"
+      >
         Leaderboard
       </button>
-      <button class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'stats' }"
-        @click="activeTab = 'stats'">
+      <button
+        class="tracker-tab"
+        :class="{ 'tracker-tab--active': activeTab === 'stats' }"
+        @click="activeTab = 'stats'"
+      >
         Stats
       </button>
-      <button class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'dev' }" @click="activeTab = 'dev'">
-        Dev Tools
+      <button
+        class="tracker-tab"
+        :class="{ 'tracker-tab--active': activeTab === 'roll' }"
+        @click="activeTab = 'roll'"
+      >
+        Roll Dice
       </button>
     </div>
 
@@ -216,21 +233,23 @@ function resetTeams() {
       <!-- Leaderboard -->
       <div v-else-if="activeTab === 'leaderboard'" class="leaderboard-table">
         <div class="leaderboard-table__header">
-          <span>Rank</span>
-          <span class="stats-table__header-name">Team Name</span>
+          <span></span>
+          <span class="stats-table__header-name"></span>
           <span class="stats-table__header-num">Tile</span>
           <span class="stats-table__header-num">Rolls</span>
         </div>
 
         <div v-for="(team, index) in rankedTeams" :key="team.id" class="stats-team">
-          <div class="leaderboard-table__row leaderboard-table__row--static"
-            :class="{ 'leaderboard-table__row--top': index < 3 }">
+          <div
+            class="leaderboard-table__row leaderboard-table__row--static"
+            :class="{ 'leaderboard-table__row--top': index < 3 }"
+          >
             <span class="rank-label" :class="`rank-label--${index + 1}`">
               {{ rankLabel(index) }}
             </span>
             <div class="team-cell">
               <TeamToken :team="team" size="sm" />
-              <span class="team-cell__name">{{ team.name }}</span>
+              <span class="team-cell__name" :style="{ color: team.color }">{{ team.name }}</span>
             </div>
             <span class="tile-cell">{{ team.position }}</span>
             <span class="tasks-cell">{{ rollsMadeByTeam.get(team.id) ?? 0 }}</span>
@@ -267,22 +286,26 @@ function resetTeams() {
 
         <div class="leaderboard-table">
           <div class="leaderboard-table__header stats-table__header">
-            <span>Rank</span>
-            <span class="stats-table__header-name">Team Name</span>
+            <span></span>
+            <span class="stats-table__header-name"></span>
             <span class="stats-table__header-num">Gold</span>
             <span class="stats-table__header-num">Items</span>
             <span class="stats-table__header-num">Actions</span>
           </div>
 
           <div v-for="(stat, index) in teamStats" :key="stat.team.id" class="stats-team">
-            <div class="leaderboard-table__row stats-table__row leaderboard-table__row--static"
-              :class="{ 'leaderboard-table__row--top': index < 3 }">
+            <div
+              class="leaderboard-table__row stats-table__row leaderboard-table__row--static"
+              :class="{ 'leaderboard-table__row--top': index < 3 }"
+            >
               <span class="rank-label" :class="`rank-label--${index + 1}`">
                 {{ rankLabel(index) }}
               </span>
               <div class="team-cell">
                 <TeamToken :team="stat.team" size="sm" />
-                <span class="team-cell__name">{{ stat.team.name }}</span>
+                <span class="team-cell__name" :style="{ color: stat.team.color }">{{
+                  stat.team.name
+                }}</span>
               </div>
               <span class="tile-cell">{{ formatNumber(stat.gold) }}</span>
               <span class="tasks-cell">{{ formatNumber(stat.items) }}</span>
@@ -290,7 +313,11 @@ function resetTeams() {
             </div>
 
             <ul class="stats-members">
-              <li v-for="member in sortedMembers(stat.team)" :key="member.displayName" class="stats-member">
+              <li
+                v-for="member in sortedMembers(stat.team)"
+                :key="member.displayName"
+                class="stats-member"
+              >
                 <span class="stats-member__name">
                   {{ member.displayName }}
                   <span v-if="altAccountNames(member).length > 0" class="stats-member__alts">
@@ -299,46 +326,50 @@ function resetTeams() {
                 </span>
                 <span class="stats-member__stat">{{
                   formatNumber(memberTotals(member).gold)
-                  }}</span>
+                }}</span>
                 <span class="stats-member__stat">{{
                   formatNumber(memberTotals(member).items)
-                  }}</span>
+                }}</span>
                 <span class="stats-member__stat">{{
                   formatNumber(memberActions(stat.team.id, member.displayName))
-                  }}</span>
+                }}</span>
               </li>
             </ul>
           </div>
         </div>
       </div>
 
-      <!-- Dev Tools -->
-      <div v-else class="dev-tools">
-        <p class="dev-tools__notice">
-          Temporary — stands in for the real backend-driven rolls. Will be removed once that's wired
-          up.
-        </p>
+      <!-- Roll Dice -->
+      <div v-else class="roll-tab">
+        <div class="roll-panel">
+          <div class="team-tabs">
+            <button
+              v-for="team in gameStore.state.teams"
+              :key="team.id"
+              class="team-tab-chip"
+              :class="{ 'team-tab-chip--active': team.id === selectedTeamId }"
+              :style="team.id === selectedTeamId ? { '--chip-color': team.color } : undefined"
+              @click="selectedTeamId = team.id"
+            >
+              {{ team.name }}
+            </button>
+          </div>
 
-        <div class="dev-tools__status">
-          <span class="status-dot" :class="connected ? 'status-dot--live' : 'status-dot--offline'" />
-          <span class="status-label">{{ connected ? 'LIVE' : 'OFFLINE' }}</span>
+          <div
+            v-if="selectedTeam"
+            class="team-preview"
+            :style="{ '--preview-color': selectedTeam.color }"
+          >
+            <div class="team-preview__logo">
+              <TeamToken :team="selectedTeam" size="fill" />
+            </div>
+            <span class="team-preview__name">{{ selectedTeam.name }}</span>
+          </div>
+
+          <button class="roll-btn" :disabled="onCooldown" @click="rollDice">
+            {{ onCooldown ? `ROLL DICE · ${cooldownSecondsLeft}s` : 'ROLL DICE' }}
+          </button>
         </div>
-
-        <div v-if="currentTeam" class="turn-indicator">
-          <span class="turn-indicator__dot" :style="{ background: currentTeam.color }" />
-          <span class="turn-indicator__label">{{ currentTeam.name }}</span>
-          <span v-if="waitingLabel" class="turn-indicator__waiting">{{ waitingLabel }}</span>
-        </div>
-
-        <button class="nav-btn nav-btn--roll" @click="rollDice">Roll Dice</button>
-
-        <div class="force-roll">
-          <input v-model.number="forcedRoll" type="number" min="1" max="6" placeholder="1-6"
-            class="force-roll__input" />
-          <button class="nav-btn nav-btn--force" @click="forceRoll">Force</button>
-        </div>
-
-        <button class="nav-btn nav-btn--reset" @click="resetTeams">Reset</button>
       </div>
     </div>
   </div>
@@ -386,6 +417,26 @@ function resetTeams() {
 .tracker-tab:hover {
   color: var(--osrs-text);
   background: var(--osrs-panel-hover);
+}
+
+/* On a phone-width screen, 5 tabs with nowrap labels don't fit in one row —
+ * flex items default to min-width: auto, so instead of shrinking they just
+ * push the row past the screen edge. Let it scroll horizontally instead,
+ * with each tab kept at its natural (readable) width. Desktop's sidebar is
+ * wide enough that this never kicks in there. */
+@media (max-width: 768px) {
+  .tracker-tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tracker-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tracker-tab {
+    flex: 0 0 auto;
+  }
 }
 
 .tracker-tab--active {
@@ -482,7 +533,7 @@ function resetTeams() {
  * different lengths into columns of different widths (which was the
  * previous "smushed" look on the narrower columns). */
 .stats-table__header-num {
-  text-align: right;
+  text-align: center;
 }
 
 /* Grid items default to min-width: auto, which floors this cell at its own
@@ -636,7 +687,7 @@ function resetTeams() {
   font-family: var(--font-display);
   font-size: 0.6rem;
   color: var(--osrs-text);
-  text-align: right;
+  text-align: center;
   white-space: nowrap;
 }
 
@@ -669,7 +720,6 @@ function resetTeams() {
 .team-cell__name {
   font-size: 1.1rem;
   font-weight: 500;
-  color: var(--osrs-text-bright);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -680,167 +730,132 @@ function resetTeams() {
   font-family: var(--font-display);
   font-size: 0.6rem;
   color: var(--osrs-text);
-  text-align: right;
+  text-align: center;
   white-space: nowrap;
 }
 
-/* ── Dev Tools ── */
-.dev-tools {
+/* ── Roll Dice ──
+ * Deliberately breaks from the rest of the app's sharp 2px pixel-UI radius —
+ * this is the one interactive "hero" action on this tab, so it gets a
+ * softer, more contemporary card treatment instead. */
+.roll-tab {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   padding: 0.75rem;
 }
 
-.dev-tools__notice {
-  font-size: 0.9rem;
-  color: var(--osrs-text-muted);
-  font-style: italic;
-  line-height: 1.5;
-}
-
-.dev-tools__status {
+.roll-panel {
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.status-dot--live {
-  background: var(--osrs-green);
-  box-shadow: 0 0 6px var(--osrs-green);
-  animation: pulse 2s ease infinite;
-}
-
-.status-dot--offline {
-  background: var(--osrs-red);
-}
-
-.status-label {
-  font-family: var(--font-display);
-  font-size: 0.52rem;
-  color: var(--osrs-text-muted);
-}
-
-.turn-indicator {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.5rem 0.6rem;
-  background: var(--osrs-panel-light);
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+  background: linear-gradient(160deg, var(--osrs-panel-light), var(--osrs-panel));
   border: 1px solid var(--osrs-border);
-  border-radius: var(--border-radius);
+  border-radius: 16px;
 }
 
-.turn-indicator__dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
+.team-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
 }
 
-.turn-indicator__label {
-  font-family: var(--font-display);
-  font-size: 0.52rem;
-  color: var(--osrs-text);
-  white-space: nowrap;
-}
-
-.turn-indicator__waiting {
-  margin-left: auto;
-  font-family: var(--font-display);
-  font-size: 0.46rem;
+.team-tab-chip {
+  display: flex;
+  align-items: center;
+  padding: 0.4rem 0.8rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
   color: var(--osrs-text-muted);
-  white-space: nowrap;
-}
-
-.nav-btn {
-  width: 100%;
-  padding: 0.5rem 0.9rem;
-  font-family: var(--font-display);
-  font-size: 0.52rem;
-  border-radius: var(--border-radius);
+  background: var(--osrs-panel);
+  border: 1px solid var(--osrs-border);
+  border-radius: 999px;
   cursor: pointer;
-  border: 1px solid;
   transition:
+    color var(--transition-fast),
     background var(--transition-fast),
-    border-color var(--transition-fast);
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
-.nav-btn--roll {
-  background: var(--osrs-panel-light);
-  border-color: var(--osrs-border-gold);
-  color: var(--osrs-gold);
+.team-tab-chip:hover {
+  color: var(--osrs-text-bright);
+  transform: translateY(-1px);
 }
 
-.nav-btn--roll:hover {
-  background: #16382a;
-  border-color: var(--osrs-gold);
-}
-
-.force-roll {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.force-roll__input {
-  width: 66px;
-  flex-shrink: 0;
-  padding: 0.5rem 0.4rem;
-  font-family: var(--font-display);
-  font-size: 0.52rem;
-  background: var(--osrs-panel-light);
-  border: 1px solid var(--osrs-border);
-  border-radius: var(--border-radius);
-  color: var(--osrs-text);
-  text-align: center;
-  appearance: textfield;
-  -moz-appearance: textfield;
-}
-
-.force-roll__input::-webkit-inner-spin-button,
-.force-roll__input::-webkit-outer-spin-button {
-  appearance: none;
-}
-
-.force-roll__input:focus {
-  outline: none;
-  border-color: var(--osrs-border-gold);
-}
-
-.nav-btn--force {
-  flex: 1;
-  background: var(--osrs-panel-light);
-  border-color: var(--osrs-border-light);
-  color: var(--osrs-text);
-}
-
-.nav-btn--force:hover {
+.team-tab-chip--active {
+  color: var(--osrs-text-bright);
   background: var(--osrs-panel-hover);
-  border-color: var(--osrs-border-gold);
-  color: var(--osrs-gold);
+  border-color: var(--chip-color, var(--osrs-border-gold));
+  box-shadow: 0 0 0 1px var(--chip-color, var(--osrs-border-gold)) inset;
 }
 
-.nav-btn--reset {
-  background: var(--osrs-panel-light);
-  border-color: var(--osrs-border);
+.team-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.5rem 1rem;
+  background: radial-gradient(circle at 50% 0%, var(--osrs-panel-hover), var(--osrs-panel) 70%);
+  border: 1px solid var(--preview-color, var(--osrs-border));
+  border-radius: 14px;
+  box-shadow: 0 0 24px -8px var(--preview-color, transparent);
+  transition:
+    border-color var(--transition-normal),
+    box-shadow var(--transition-normal);
+}
+
+/* Fills as much of the preview card as it can, up to a sensible cap — see
+ * .team-token--fill, which lets this container fully control the size. */
+.team-preview__logo {
+  width: min(100%, 220px);
+  aspect-ratio: 1;
+}
+
+.team-preview__name {
+  font-family: var(--font-body);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--osrs-text-bright);
+}
+
+.roll-btn {
+  width: 100%;
+  padding: 0.9rem;
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--osrs-bg);
+  background: linear-gradient(135deg, var(--osrs-green), var(--osrs-border-light));
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px -4px rgba(39, 174, 96, 0.6);
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+.roll-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px -4px rgba(39, 174, 96, 0.75);
+}
+
+.roll-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.roll-btn:disabled {
+  cursor: not-allowed;
   color: var(--osrs-text-muted);
-}
-
-.nav-btn--reset:hover {
-  background: #3a1010;
-  border-color: var(--osrs-red);
-  color: var(--osrs-red);
+  background: var(--osrs-panel-light);
+  box-shadow: none;
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     opacity: 1;

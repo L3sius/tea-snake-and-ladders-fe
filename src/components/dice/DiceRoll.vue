@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { gameStore } from '@/stores/gameStore'
-import TeamToken from '@/components/board/TeamToken.vue'
 import type { DiceRollEvent } from '@/types'
 
 const props = defineProps<{
@@ -70,7 +69,6 @@ const moveSummary = computed(() => {
   <div class="dice-overlay">
     <div class="dice-roll-card">
       <div v-if="team" class="dice-roll-card__team">
-        <TeamToken :team="team" size="lg" />
         <span class="dice-roll-card__team-name">{{ team.name }}</span>
       </div>
 

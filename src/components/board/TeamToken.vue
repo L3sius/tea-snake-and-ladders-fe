@@ -3,7 +3,7 @@ import type { Team } from '@/types'
 
 defineProps<{
   team: Team
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'fill'
 }>()
 </script>
 
@@ -51,6 +51,23 @@ defineProps<{
 .team-token--lg {
   width: 48px;
   height: 48px;
+}
+
+/* Sized entirely by the parent — e.g. a container with a fixed max-width
+ * and aspect-ratio: 1, so the logo fills the space it's given responsively
+ * instead of a fixed pixel size (see .team-preview__logo). A plain rounded
+ * rectangle rather than the circular badge the other sizes use — this is a
+ * large hero image, not a small badge, so it shows the whole logo uncropped
+ * instead of cutting it into a circle. */
+.team-token--fill {
+  width: 100%;
+  height: 100%;
+  border-width: 3px;
+  border-radius: 12px;
+}
+
+.team-token--fill .team-token__logo {
+  object-fit: contain;
 }
 
 .team-token__logo {

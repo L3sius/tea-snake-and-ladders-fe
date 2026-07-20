@@ -80,54 +80,34 @@ function formatTime(date: Date): string {
 <template>
   <div class="roll-log">
     <div class="roll-log__body">
+      <img src="/images/logo.png" alt="" class="roll-log__logo" />
+
       <div v-if="rollHistory.length === 0" class="tracker-empty">
         No rolls yet. Hit "Roll Dice" to start!
       </div>
 
       <template v-else>
         <div class="history-nav">
-          <button
-            class="history-nav__btn"
-            :disabled="!canGoPrev"
-            @click="gameStore.stepHistoryPrev()"
-          >
+          <button class="history-nav__btn" :disabled="!canGoPrev" @click="gameStore.stepHistoryPrev()">
             ◀ Prev
           </button>
-          <button
-            class="history-nav__label"
-            :class="{ 'history-nav__label--live': isLive }"
-            :disabled="isLive"
-            @click="gameStore.jumpToLive()"
-          >
+          <button class="history-nav__label" :class="{ 'history-nav__label--live': isLive }" :disabled="isLive"
+            @click="gameStore.jumpToLive()">
             {{ historyLabel }}
           </button>
-          <button
-            class="history-nav__btn"
-            :disabled="!canGoNext"
-            @click="gameStore.stepHistoryNext()"
-          >
+          <button class="history-nav__btn" :disabled="!canGoNext" @click="gameStore.stepHistoryNext()">
             Next ▶
           </button>
         </div>
 
         <div class="team-filter">
-          <button
-            class="team-filter__chip"
-            :class="{ 'team-filter__chip--active': selectedTeamId === null }"
-            @click="selectedTeamId = null"
-          >
+          <button class="team-filter__chip" :class="{ 'team-filter__chip--active': selectedTeamId === null }"
+            @click="selectedTeamId = null">
             All
           </button>
-          <button
-            v-for="team in teams"
-            :key="team.id"
-            class="team-filter__chip"
-            :class="{ 'team-filter__chip--active': selectedTeamId === team.id }"
-            :style="
-              selectedTeamId === team.id ? { borderColor: team.color, color: team.color } : {}
-            "
-            @click="toggleTeamFilter(team.id)"
-          >
+          <button v-for="team in teams" :key="team.id" class="team-filter__chip"
+            :class="{ 'team-filter__chip--active': selectedTeamId === team.id }" :style="selectedTeamId === team.id ? { borderColor: team.color, color: team.color } : {}
+              " @click="toggleTeamFilter(team.id)">
             <span class="team-filter__dot" :style="{ background: team.color }" />
             {{ team.name }}
           </button>
@@ -141,18 +121,16 @@ function formatTime(date: Date): string {
           <div v-for="group in groupedEntries" :key="group.label" class="roll-group">
             <div class="roll-group__label">{{ group.label }}</div>
             <ul class="roll-list">
-              <li
-                v-for="{ entry, idx } in group.rolls"
-                :key="entry.id"
-                class="roll-entry"
-                :class="{ 'roll-entry--active': idx === activeEntryIndex }"
-                @click="gameStore.viewRollAt(idx)"
-              >
+              <li v-for="{ entry, idx } in group.rolls" :key="entry.id" class="roll-entry"
+                :class="{ 'roll-entry--active': idx === activeEntryIndex }" @click="gameStore.viewRollAt(idx)">
                 <div class="roll-entry__line1">
-                  <span class="roll-entry__dot" :style="{ background: entry.teamColor }" />
-                  <span class="roll-entry__team">{{ entry.teamName }}</span>
+                  <span class="roll-entry__team" :style="{ color: entry.teamColor }">{{
+                    entry.teamName
+                    }}</span>
                   <span class="roll-entry__verb"> rolled a </span>
-                  <strong class="roll-entry__roll">{{ entry.roll }}</strong>
+                  <strong class="roll-entry__roll" :style="{ color: entry.teamColor }">{{
+                    entry.roll
+                    }}</strong>
                   <span class="roll-entry__time">
                     {{ formatTime(entry.timestamp) }} ·
                     {{ formatRelativeTime(entry.timestamp) }} ago
@@ -162,15 +140,12 @@ function formatTime(date: Date): string {
                   <span>Moved from </span>
                   <strong>{{ entry.fromPosition }}</strong>
                   <span> to </span>
-                  <strong class="roll-entry__dest">{{ entry.toPosition }}</strong>
+                  <strong>{{ entry.toPosition }}</strong>
                   <template v-if="entry.snakeOrLadder">
-                    <span
-                      :class="
-                        entry.snakeOrLadder.type === 'ladder'
-                          ? 'roll-entry__climb'
-                          : 'roll-entry__fall'
-                      "
-                    >
+                    <span :class="entry.snakeOrLadder.type === 'ladder'
+                      ? 'roll-entry__climb'
+                      : 'roll-entry__fall'
+                      ">
                       {{
                         entry.snakeOrLadder.type === 'ladder' ? ' and climbed to ' : ' and fell to '
                       }}
@@ -200,6 +175,14 @@ function formatTime(date: Date): string {
   overflow-y: auto;
   min-height: 0;
   padding: 0.4rem 0;
+}
+
+.roll-log__logo {
+  display: block;
+  max-width: 320px;
+  width: 100%;
+  margin: 0.5rem auto 0.25rem;
+  margin-top: 0;
 }
 
 .tracker-empty {
@@ -374,24 +357,12 @@ function formatTime(date: Date): string {
   font-size: 0.98rem;
 }
 
-.roll-entry__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
 .roll-entry__team {
   font-weight: 600;
-  color: var(--osrs-text-bright);
 }
 
 .roll-entry__verb {
   color: var(--osrs-text-muted);
-}
-
-.roll-entry__roll {
-  color: var(--osrs-gold);
 }
 
 .roll-entry__time {
@@ -405,16 +376,11 @@ function formatTime(date: Date): string {
 .roll-entry__line2 {
   font-size: 0.92rem;
   color: var(--osrs-text-muted);
-  padding-left: 1.75rem;
   line-height: 1.4;
 }
 
 .roll-entry__line2 strong {
   color: var(--osrs-text);
-}
-
-.roll-entry__dest {
-  color: var(--osrs-gold) !important;
 }
 
 .roll-entry__climb {

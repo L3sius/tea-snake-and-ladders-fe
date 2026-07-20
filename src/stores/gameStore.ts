@@ -8,18 +8,21 @@ const OVERLAY_MS = 3500
 const STEP_MS = 200
 const LAND_PAUSE_MS = 400
 export const SPECIAL_TRANSITION_MS = 1000
+export const ROLL_COOLDOWN_MS = 10_000
 
 interface GameState {
   teams: Team[]
   activeDiceRoll: DiceRollEvent | null
   connected: boolean
-  currentTeamIndex: number
   rollHistory: RollHistoryEntry[]
   displayedPositions: Record<string, number>
   specialMoving: Record<string, boolean>
   // Number of chronological rolls applied to the board currently on screen.
   // `null` means "live" — the board tracks each team's real position.
   historyIndex: number | null
+  // Anti-spam: no team can roll again until this timestamp (epoch ms).
+  // Global rather than per-team — any roll, by any team, locks out everyone.
+  rollCooldownUntil: number | null
 }
 
 // Roster from the (currently mocked) getTeams — kept unmutated as the
@@ -35,12 +38,16 @@ const state = reactive<GameState>({
   teams: seededTeams,
   activeDiceRoll: null,
   connected: false,
-  currentTeamIndex: 0,
   rollHistory: seededHistory,
   displayedPositions: Object.fromEntries(seededTeams.map((t) => [t.id, t.position])),
   specialMoving: {},
   historyIndex: null,
+  rollCooldownUntil: null,
 })
+
+function canRoll(): boolean {
+  return state.rollCooldownUntil === null || Date.now() >= state.rollCooldownUntil
+}
 
 const animVersion: Record<string, number> = {}
 
@@ -257,8 +264,15 @@ function animateToken(teamId: string, from: number, toRaw: number, finalPos: num
   setTimeout(step, OVERLAY_MS)
 }
 
-function rollForCurrentTeam(forcedRoll?: number) {
-  const team = state.teams[state.currentTeamIndex]
+// No turn order — any team can roll anytime (subject to the global cooldown
+// below), since there's no per-team authorization on who triggers a roll.
+// Real task-completion gating (a team can't roll before finishing their
+// current tile's task) is left to the backend to enforce and error on —
+// this mock never blocks a roll for that reason.
+function rollForTeam(teamId: string, forcedRoll?: number) {
+  if (!canRoll()) return
+
+  const team = state.teams.find((t) => t.id === teamId)
   if (!team) return
 
   const roll =
@@ -310,7 +324,7 @@ function rollForCurrentTeam(forcedRoll?: number) {
     timestamp: new Date(),
   })
 
-  state.currentTeamIndex = (state.currentTeamIndex + 1) % state.teams.length
+  state.rollCooldownUntil = Date.now() + ROLL_COOLDOWN_MS
 }
 
 function resetAll() {
@@ -323,9 +337,9 @@ function resetAll() {
     state.displayedPositions[t.id] = 1
     delete state.specialMoving[t.id]
   })
-  state.currentTeamIndex = 0
   state.rollHistory = []
   state.historyIndex = null
+  state.rollCooldownUntil = null
 }
 
 function updateTaskProgress(teamId: string, tileId: number, dropsCollected: number) {
@@ -361,7 +375,8 @@ function setTeams(teams: Team[]) {
 export const gameStore = {
   state,
   applyDiceRoll,
-  rollForCurrentTeam,
+  rollForTeam,
+  canRoll,
   resetAll,
   updateTaskProgress,
   getTeamProgressOnTile,
