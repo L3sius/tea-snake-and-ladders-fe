@@ -171,6 +171,10 @@ const cooldownSecondsLeft = computed(() => {
 const onCooldown = computed(() => cooldownSecondsLeft.value > 0)
 
 function rollDice() {
+  // Clicking Roll Dice is a clear signal the user wants to see it happen —
+  // jump to live first so the overlay/animation actually plays, rather than
+  // landing silently the way an unrelated roll would while browsing history.
+  gameStore.jumpToLive()
   gameStore.rollForTeam(selectedTeamId.value)
 }
 </script>

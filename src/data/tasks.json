@@ -1,123 +1,147 @@
 [
   {
-    "variation": "Tempeross",
-    "description": "Obtain 1k permits as a team"
+    "variation": "Skilling",
+    "description": "Subdue Tempoross 200 times as a team",
+    "image": "easy/subdue_tempoross_200_times.png"
   },
   {
-    "variation": "Tempeross",
-    "description": "Obtain 2 uniques (25 soaked pages drop counts)"
+    "variation": "Skilling",
+    "description": "Obtain 2 uniques (25 soaked pages drop counts)",
+    "image": "easy/obtain_two_temporos_uniques.png"
   },
   {
-    "variation": "Wintertodt",
-    "description": "Obtain 250 loot rewards as a team"
+    "variation": "Skilling",
+    "description": "Subdue The Wintertodt 100 times as a team",
+    "image": "easy/subdue_wintertodt_100_times.png"
   },
   {
-    "variation": "Wintertodt",
-    "description": "Obtain any 4 uniques from wintertodt"
+    "variation": "Skilling",
+    "description": "Obtain any 4 uniques from wintertodt",
+    "image": "easy/obtain_any_4_uniques_wintertodt.png"
   },
   {
-    "variation": "Vale totems",
-    "description": "Obtain 100 research points as a team"
+    "variation": "Skilling",
+    "description": "Rummage vale offerings 100 times as a team (hasty-rummage counts as 1)",
+    "image": "easy/rummage_vale_offerings.png"
   },
   {
-    "variation": "Vale totems",
-    "description": "Obtain any two uniques"
+    "variation": "Skilling",
+    "description": "Obtain any 2 uniques from rummaging",
+    "image": "easy/obtain_any_two_uniques_rummaging.png"
   },
   {
-    "variation": "Beginner Clues",
-    "description": "Obtain the message 'your treasure is almost worth nothing'"
+    "variation": "Clues",
+    "description": "Obtain a beginner clue casket worth less than 15 gp",
+    "image": "easy/obtain_beginner_casket_15_gp.png"
   },
   {
-    "variation": "Beginner Clues",
-    "description": "Obtain any unique footwear"
+    "variation": "Clues",
+    "description": "Obtain any unique footwear from a beginner clue",
+    "image": "easy/obtain_any_unique_footwear_beginner.png"
   },
   {
-    "variation": "Easy Clues",
-    "description": "Obtain all 4 pages of any god book (can mix and match pages)"
+    "variation": "Clues",
+    "description": "Obtain all 4 pages of any god book from an easy clue (can mix and match pages)",
+    "image": "easy/obtain_all_4_pages.png"
   },
   {
-    "variation": "Easy Clues",
-    "description": "Get any vestment robe top and bottom"
+    "variation": "Clues",
+    "description": "Get any vestment robe top and bottom from an easy clue",
+    "image": "easy/any_vestment_robe_top.png"
   },
   {
-    "variation": "Sailing",
-    "description": "Catch a Giant blue krill (1/2k drop)"
+    "variation": "Skilling",
+    "description": "Catch a Giant blue krill",
+    "image": "easy/catch_giant_blue_krill.png"
   },
   {
-    "variation": "Sailing",
-    "description": "Catch a Golden Haddock (1/2k drop)"
+    "variation": "Skilling",
+    "description": "Catch a Golden Haddock",
+    "image": "easy/catch_golden_haddock.png"
   },
   {
     "variation": "PvP",
-    "description": "Obtain 1m in one loot key"
+    "description": "Obtain 1m in one loot key",
+    "image": "easy/1m_loot_key.png"
   },
   {
     "variation": "PvP",
-    "description": "Obtain a total loot value of 5m from keys."
+    "description": "Obtain 5m in loot from wilderness keys",
+    "image": "easy/5m_loot_key.png"
   },
   {
-    "variation": "Moons",
-    "description": "Obtain any bloodmoon item"
+    "variation": "PvM",
+    "description": "Obtain any bloodmoon item",
+    "image": "easy/obtain_any_bloodmoon.png"
   },
   {
     "variation": "Snake",
-    "description": "Slide down to tile 6."
-  },
-  {
-    "variation": "Moons",
-    "description": "Obtain any three eclipse item"
-  },
-  {
-    "variation": "Barrows",
-    "description": "Obtain any three barrows weapon"
-  },
-  {
-    "variation": "Barrows",
-    "description": "Obtain any platebody from barrows"
-  },
-  {
-    "variation": "Barrows",
-    "description": "Obtain any platelegs from barrows"
-  },
-  {
-    "variation": "Slayer",
-    "description": "Obtain the crawling hand"
+    "description": "Slide down to tile 6.",
+    "image": "easy/background.png"
   },
   {
     "variation": "PvM",
-    "description": "Obtain 4 scurrius spines"
+    "description": "Obtain any eclipse item",
+    "image": "easy/obtain_any_eclipse.png"
   },
   {
     "variation": "PvM",
-    "description": "Obtain any scroll from Royal titans"
+    "description": "Obtain any 3 barrows weapon",
+    "image": "easy/obtain_any_3_barrows_weapon.png"
   },
   {
     "variation": "PvM",
-    "description": "Obtain Sarachnis cudgel"
+    "description": "Obtain any platebody from barrows",
+    "image": "easy/obtain_any_platebody_barrows.png"
   },
   {
-    "variation": "Medium clues",
+    "variation": "PvM",
+    "description": "Obtain any platelegs from barrows",
+    "image": "easy/obtain_any_platelegs_barrows.png"
+  },
+  {
+    "variation": "PvM",
+    "description": "Obtain the crawling hand",
+    "image": "easy/obtain_crawling_hand.png"
+  },
+  {
+    "variation": "PvM",
+    "description": "Obtain 4 scurrius spines",
+    "image": "easy/obtain_4_scurrius_spines.png"
+  },
+  {
+    "variation": "PvM",
+    "description": "Obtain 5 giantsoul amulets from the Royal Titans",
+    "image": "easy/obtain_5_giantsoul_amulets.png"
+  },
+  {
+    "variation": "PvM",
+    "description": "Obtain a Sarachnis cudgel",
+    "image": "easy/obtain_sarachnis_cudgel.png"
+  },
+  {
+    "variation": "Clues",
     "description": "Obtain any 2 boater uniques",
     "image": "medium/two_boater_uniques.png"
   },
   {
-    "variation": "Medium clues",
+    "variation": "PvM",
     "description": "Obtain a venator shard",
     "image": "medium/venator_shard.png"
   },
   {
-    "variation": "Medium clues",
+    "variation": "Clues",
     "description": "Obtain any 2 headbands",
     "image": "medium/two_headbands.png"
   },
   {
-    "variation": "Hard clues",
+    "variation": "Clues",
     "description": "Obtain a hard clue casket worth over 250k",
     "image": "medium/hard_clue_casket_250.png"
   },
   {
-    "variation": "Hard clues",
-    "description": "Obtain any trimmed armour piece (god items included)",
+    "variation": "Clues",
+    "description": "Obtain any metal trimmed armour piece (god items included)",
     "image": "medium/trimmed_armour_piece.png"
   },
   {
@@ -126,27 +150,27 @@
     "image": "medium/purple_any_raid.png"
   },
   {
-    "variation": "Godwars dungeon",
-    "description": "Obtain 2 bandos uniques",
+    "variation": "PvM",
+    "description": "Obtain 2 General Graardor uniques",
     "image": "medium/two_bandos_uniques.png"
   },
   {
-    "variation": "Godwars dungeon",
-    "description": "Obtain 2 Kree'arra unique",
+    "variation": "PvM",
+    "description": "Obtain 2 Kree'arra uniques",
     "image": "medium/two_kreearra_uniques.png"
   },
   {
-    "variation": "Godwars dungeon",
-    "description": "Obtain 2 Kril uniques",
+    "variation": "PvM",
+    "description": "Obtain 2 K'ril Tsutsaroth uniques",
     "image": "medium/two_krill_uniques.png"
   },
   {
-    "variation": "Godwars dungeon",
-    "description": "Obtain 2 Zilyana uniques",
+    "variation": "PvM",
+    "description": "Obtain 2 Commander Zilyana uniques",
     "image": "medium/two_zilyana_uniques.png"
   },
   {
-    "variation": "Slayer",
+    "variation": "PvM",
     "description": "Obtain a warped sceptre",
     "image": "medium/warped_sceptre.png"
   },
@@ -157,7 +181,7 @@
   },
   {
     "variation": "Raids",
-    "description": "Obtain any purple from a raid",
+    "description": "Obtain a purple from any raid",
     "image": "medium/purple_any_raid.png"
   },
   {
@@ -167,7 +191,7 @@
   },
   {
     "variation": "PvM",
-    "description": "Complete a full set of Hueycoatl hide.",
+    "description": "Complete a full set of Hueycoatl hide",
     "image": "medium/full_set_hueycoatl_hide.png"
   },
   {
@@ -176,13 +200,13 @@
     "image": "medium/2m_loot_key.png"
   },
   {
-    "variation": "Slayer",
+    "variation": "PvM",
     "description": "Obtain any 2 araxxor uniques",
     "image": "medium/two_araxxor_uniques.png"
   },
   {
     "variation": "PvM",
-    "description": "Obtain two vorkaths head (can not be from the 50th kc drop)",
+    "description": "Obtain two Vorkath heads (can not be from the 50th kc drop)",
     "image": "medium/two_vorkath_heads.png"
   },
   {
@@ -191,18 +215,18 @@
     "image": "medium/10m_wilderness_keys.png"
   },
   {
-    "variation": "Wilderness",
-    "description": "Obtain any two uniques from the multi-variant bosses (Big bear, Big spooder, Big skeleton man)",
+    "variation": "PvM",
+    "description": "Obtain any 2 uniques from Callisto, Vet'ion or Venenatis",
     "image": "medium/any_voidwaker_unique.png"
   },
   {
     "variation": "PvM",
-    "description": "Obtain the Berserker, warrior, seers and archers rings from the DKs",
+    "description": "Obtain all rings from the Dagannoth Kings",
     "image": "medium/dk_rings.png"
   },
   {
     "variation": "PvM",
-    "description": "Obtain 2 Zenyte shards from Demonic Gorrillas",
+    "description": "Obtain 2 Zenyte shards from Demonic Gorillas",
     "image": "medium/two_zenyte_shards.png"
   },
   {
@@ -211,8 +235,8 @@
     "image": "medium/background.png"
   },
   {
-    "variation": "Wilderness",
-    "description": "Obtain a malediction/odium shard",
+    "variation": "PvM",
+    "description": "Obtain a malediction or an odium shard",
     "image": "medium/malediction_odium_shard.png"
   },
   {
@@ -221,13 +245,13 @@
     "image": "medium/background.png"
   },
   {
-    "variation": "Wilderness",
-    "description": "Obtain any wilderness weapon upgrade unique from multi-variant bosses",
+    "variation": "PvM",
+    "description": "Obtain any wilderness weapon upgrade unique from Callisto, Vet'ion or Venenatis",
     "image": "medium/any_wilderness_weapon_upgrade.png"
   },
   {
-    "variation": "Wilderness",
-    "description": "Obtain any VW unique from multi-variant bosses",
+    "variation": "PvM",
+    "description": "Obtain any voidwaker piece from Callisto, Vet'ion or Venenatis",
     "image": "medium/any_voidwaker_unique.png"
   },
   {
@@ -236,8 +260,8 @@
     "image": "medium/two_unsired.png"
   },
   {
-    "variation": "Wilderness",
-    "description": "Obtain any totem or rev weapon",
+    "variation": "PvM",
+    "description": "Obtain any revenant totem or weapon",
     "image": "medium/totem_revenant_weapon.png"
   },
   {
@@ -247,7 +271,7 @@
   },
   {
     "variation": "Raids",
-    "description": "Obtain a purple from any Raids",
+    "description": "Obtain a purple from any raid",
     "image": "medium/purple_any_raid.png"
   },
   {
@@ -287,7 +311,7 @@
   },
   {
     "variation": "Raids",
-    "description": "Obtain a Purple from ToB",
+    "description": "Obtain a purple from ToB",
     "image": "medium/any_purple_tob.png"
   },
   {
@@ -297,12 +321,12 @@
   },
   {
     "variation": "PvM",
-    "description": "Obtain any nightmare unique",
+    "description": "Obtain any Nightmare unique",
     "image": "medium/any_nightmare_unique.png"
   },
   {
     "variation": "PvM",
-    "description": "Obtain any vorkath unique",
+    "description": "Obtain any vorkath unique (excluding head)",
     "image": "medium/any_vorkath_unique.png"
   },
   {
@@ -312,17 +336,17 @@
   },
   {
     "variation": "Raids",
-    "description": "Obtain a Purple from ToB",
+    "description": "Obtain a purple from ToB",
     "image": "medium/any_purple_tob.png"
   },
   {
     "variation": "Raids",
-    "description": "Obtain a Purple from CoX",
+    "description": "Obtain a purple from CoX",
     "image": "medium/any_cox_unique.png"
   },
   {
     "variation": "Raids",
-    "description": "Obtain a Purple from ToA",
+    "description": "Obtain a purple from ToA",
     "image": "medium/any_toa_purple.png"
   },
   {
@@ -330,20 +354,20 @@
     "description": "Obtain any 3 noxious halberd pieces"
   },
   {
-    "variation": "PvM",
-    "description": "Obtain two Purples from any raid"
+    "variation": "Raids",
+    "description": "Obtain 2 purples from any raid"
   },
   {
     "variation": "PvM",
-    "description": "Obtain any two Cerberus crystals"
-  },
-  {
-    "variation": "Yama",
-    "description": "Obtain any unique from Yama (excluding barrel, dossier, lockbox, transference, shard, tp scroll)"
+    "description": "Obtain any 2 Cerberus crystals"
   },
   {
     "variation": "PvM",
-    "description": "Obtain a unique from the Maggot King"
+    "description": "Obtain any unique from Yama (oathplate armour, pet or horn)"
+  },
+  {
+    "variation": "PvM",
+    "description": "Obtain any unique from the Colosseum"
   },
   {
     "variation": "PvM",
@@ -359,76 +383,79 @@
   },
   {
     "variation": "Raids",
-    "description": "Complete 15 ToA"
+    "description": "Complete 15 expert ToAs"
   },
   {
     "variation": "Raids",
-    "description": "Obtain a Purple from CoX",
+    "description": "Obtain a purple from CoX",
     "image": "hard/any_cox_unique.png"
   },
   {
-    "variation": "Doom",
+    "variation": "PvM",
     "description": "Obtain any unique from Doom"
   },
   {
     "variation": "Raids",
-    "description": "Obtain a Purple from ToB"
+    "description": "Obtain a purple from ToB"
   },
   {
     "variation": "Raids",
-    "description": "Complete a CoX with 200k+ team points"
+    "description": "Complete a CoX run with your bingo teammates - party size can be up to 2 short of your full team"
   },
   {
-    "variation": "Wilderness",
-    "description": "Complete a wilderness shield between your team (previous drop counts towards tile if shard already obtained)"
+    "variation": "PvM",
+    "description": "Obtain any unique from Yama (oathplate armour, pet or horn)"
   },
   {
-    "variation": "Wilderness",
-    "description": "Obtain a twisted kit from CoX: Challenge mode"
+    "variation": "Raids",
+    "description": "Obtain a twisted kit from CoX:Challenge mode"
   },
   {
-    "variation": "Collo",
+    "variation": "PvM",
     "description": "Obtain a unique from the Maggot King"
   },
   {
     "variation": "Snake",
-    "description": "Slide down to tile 24."
+    "description": "Slide down to tile 24.",
+    "image": "hard/background.png"
   },
   {
-    "variation": "Doom",
+    "variation": "PvM",
     "description": "Obtain any unique from Doom"
   },
   {
-    "variation": "Yama",
-    "description": "Obtain any unique from Yama (excluding barrel, dossier, lockbox, transference, shard, tp scroll)"
+    "variation": "PvM",
+    "description": "Complete any ring from the DT2 bosses (3x chromium ingot, 1x vestige)"
   },
   {
     "variation": "Raids",
-    "description": "Obtain a Purple from ToA"
+    "description": "Obtain a purple from ToA"
   },
   {
     "variation": "Raids",
-    "description": "Obtain a Purple from ToB"
+    "description": "Obtain a purple from ToB"
   },
   {
-    "variation": "Raids",
-    "description": "Obtain a twisted kit from CoX: Challenge mode"
+    "variation": "collo",
+    "description": "Obtain a unique from the colloseum"
   },
   {
     "variation": "Snake",
-    "description": "Slide down to tile 73."
+    "description": "Slide down to tile 73.",
+    "image": "hard/background.png"
   },
   {
     "variation": "Raids",
-    "description": "Obtain a Purple from ToA"
+    "description": "Obtain a purple from ToA"
   },
   {
     "variation": "Snake",
-    "description": "Slide down to tile 73."
+    "description": "Slide down to tile 73.",
+    "image": "hard/background.png"
   },
   {
     "variation": "Raids",
-    "description": "Obtain a Purple from CoX",
+    "description": "Obtain a purple from CoX",
     "image": "hard/any_cox_unique.png"
   },
   {
@@ -437,7 +464,8 @@
   },
   {
     "variation": "Snake",
-    "description": "Slide down to tile 78."
+    "description": "Slide down to tile 78.",
+    "image": "hard/background.png"
   },
   {
     "variation": "PvM",
@@ -445,6 +473,6 @@
   },
   {
     "variation": "Raids",
-    "description": "Obtain a mega rare from raids (Tbow, scythe or shadow)"
+    "description": "Obtain a Tbow, Scythe or Shadow"
   }
 ]

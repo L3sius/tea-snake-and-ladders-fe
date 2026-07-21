@@ -2,6 +2,8 @@
 import { computed } from 'vue'
 import type { Tile, Team } from '@/types'
 import { gameStore } from '@/stores/gameStore'
+import { boardConfig } from '@/data/boardConfig'
+import { getSnakeColor } from '@/utils/snakeColors'
 import TeamToken from './TeamToken.vue'
 
 const props = defineProps<{
@@ -20,8 +22,16 @@ const tierLabel: Record<1 | 2 | 3, string> = {
   3: 'Tier 3 — Hard',
 }
 
-// The snake tiles' "image" is just a generic board-tile background filler,
-// not an actual reward — showing it in the modal would be misleading.
+// A snake's head tile has no real task — its "image" is just a generic
+// background filler. Rather than hide it, show that background with the
+// snake's own head image composited on top (matching the color it renders
+// with on the board), same idea as GameBoard's per-snake color variant.
+const snakeColor = computed(() => {
+  if (!tile.value) return null
+  const snake = boardConfig.snakes.find((s) => s.from === tile.value!.id)
+  return snake ? getSnakeColor(snake.from) : null
+})
+
 const showImage = computed(
   () => !!tile.value?.image && !tile.value.image.endsWith('/background.png'),
 )
@@ -64,8 +74,12 @@ function handleBackdropClick(e: MouseEvent) {
 
           <div class="modal__body">
             <div class="modal__task">
+              <div v-if="snakeColor" class="modal__snake-visual">
+                <img :src="`/images/tiles/${tile.image}`" alt="" class="modal__image" />
+                <img :src="snakeColor.headHref" alt="" class="modal__snake-head" />
+              </div>
               <img
-                v-if="showImage"
+                v-else-if="showImage"
                 :src="`/images/tiles/${tile.image}`"
                 :alt="tile.name"
                 class="modal__image"
@@ -211,6 +225,27 @@ function handleBackdropClick(e: MouseEvent) {
   padding: 10px;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+}
+
+.modal__snake-visual {
+  position: relative;
+  flex-shrink: 0;
+  width: 300px;
+  height: 300px;
+}
+
+.modal__snake-visual .modal__image {
+  padding: 0;
+}
+
+.modal__snake-head {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 55%;
+  height: 55%;
+  object-fit: contain;
 }
 
 .modal__description {

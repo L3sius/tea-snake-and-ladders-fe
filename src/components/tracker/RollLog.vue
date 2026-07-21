@@ -88,26 +88,48 @@ function formatTime(date: Date): string {
 
       <template v-else>
         <div class="history-nav">
-          <button class="history-nav__btn" :disabled="!canGoPrev" @click="gameStore.stepHistoryPrev()">
+          <button
+            class="history-nav__btn"
+            :disabled="!canGoPrev"
+            @click="gameStore.stepHistoryPrev()"
+          >
             ◀ Prev
           </button>
-          <button class="history-nav__label" :class="{ 'history-nav__label--live': isLive }" :disabled="isLive"
-            @click="gameStore.jumpToLive()">
+          <button
+            class="history-nav__label"
+            :class="{ 'history-nav__label--live': isLive }"
+            :disabled="isLive"
+            @click="gameStore.jumpToLive()"
+          >
             {{ historyLabel }}
           </button>
-          <button class="history-nav__btn" :disabled="!canGoNext" @click="gameStore.stepHistoryNext()">
+          <button
+            class="history-nav__btn"
+            :disabled="!canGoNext"
+            @click="gameStore.stepHistoryNext()"
+          >
             Next ▶
           </button>
         </div>
 
         <div class="team-filter">
-          <button class="team-filter__chip" :class="{ 'team-filter__chip--active': selectedTeamId === null }"
-            @click="selectedTeamId = null">
+          <button
+            class="team-filter__chip"
+            :class="{ 'team-filter__chip--active': selectedTeamId === null }"
+            @click="selectedTeamId = null"
+          >
             All
           </button>
-          <button v-for="team in teams" :key="team.id" class="team-filter__chip"
-            :class="{ 'team-filter__chip--active': selectedTeamId === team.id }" :style="selectedTeamId === team.id ? { borderColor: team.color, color: team.color } : {}
-              " @click="toggleTeamFilter(team.id)">
+          <button
+            v-for="team in teams"
+            :key="team.id"
+            class="team-filter__chip"
+            :class="{ 'team-filter__chip--active': selectedTeamId === team.id }"
+            :style="
+              selectedTeamId === team.id ? { borderColor: team.color, color: team.color } : {}
+            "
+            @click="toggleTeamFilter(team.id)"
+          >
             <span class="team-filter__dot" :style="{ background: team.color }" />
             {{ team.name }}
           </button>
@@ -121,16 +143,21 @@ function formatTime(date: Date): string {
           <div v-for="group in groupedEntries" :key="group.label" class="roll-group">
             <div class="roll-group__label">{{ group.label }}</div>
             <ul class="roll-list">
-              <li v-for="{ entry, idx } in group.rolls" :key="entry.id" class="roll-entry"
-                :class="{ 'roll-entry--active': idx === activeEntryIndex }" @click="gameStore.viewRollAt(idx)">
+              <li
+                v-for="{ entry, idx } in group.rolls"
+                :key="entry.id"
+                class="roll-entry"
+                :class="{ 'roll-entry--active': idx === activeEntryIndex }"
+                @click="gameStore.viewRollAt(idx)"
+              >
                 <div class="roll-entry__line1">
                   <span class="roll-entry__team" :style="{ color: entry.teamColor }">{{
                     entry.teamName
-                    }}</span>
+                  }}</span>
                   <span class="roll-entry__verb"> rolled a </span>
                   <strong class="roll-entry__roll" :style="{ color: entry.teamColor }">{{
                     entry.roll
-                    }}</strong>
+                  }}</strong>
                   <span class="roll-entry__time">
                     {{ formatTime(entry.timestamp) }} ·
                     {{ formatRelativeTime(entry.timestamp) }} ago
@@ -142,10 +169,13 @@ function formatTime(date: Date): string {
                   <span> to </span>
                   <strong>{{ entry.toPosition }}</strong>
                   <template v-if="entry.snakeOrLadder">
-                    <span :class="entry.snakeOrLadder.type === 'ladder'
-                      ? 'roll-entry__climb'
-                      : 'roll-entry__fall'
-                      ">
+                    <span
+                      :class="
+                        entry.snakeOrLadder.type === 'ladder'
+                          ? 'roll-entry__climb'
+                          : 'roll-entry__fall'
+                      "
+                    >
                       {{
                         entry.snakeOrLadder.type === 'ladder' ? ' and climbed to ' : ' and fell to '
                       }}
