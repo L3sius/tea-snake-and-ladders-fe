@@ -124,7 +124,7 @@ function formatTime(date: Date): string {
             @click="toggleTeamFilter(team.id)"
           >
             <span class="team-filter__dot" :style="{ background: team.color }" />
-            {{ team.name }}
+            <span class="team-filter__chip-name">{{ team.name }}</span>
           </button>
         </div>
 
@@ -284,6 +284,7 @@ function formatTime(date: Date): string {
   display: flex;
   align-items: center;
   gap: 0.3rem;
+  max-width: 140px;
   padding: 0.25rem 0.5rem;
   font-size: 0.85rem;
   color: var(--osrs-text-muted);
@@ -296,6 +297,13 @@ function formatTime(date: Date): string {
     color var(--transition-fast),
     border-color var(--transition-fast),
     background var(--transition-fast);
+}
+
+.team-filter__chip-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .team-filter__chip:hover {
@@ -378,10 +386,21 @@ function formatTime(date: Date): string {
 
 .roll-entry__team {
   font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .roll-entry__verb {
   color: var(--osrs-text-muted);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.roll-entry__roll {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .roll-entry__time {

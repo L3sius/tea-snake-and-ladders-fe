@@ -2,6 +2,7 @@ import { reactive, nextTick } from 'vue'
 import { fetchTeams, parseTeams } from '@/data/getTeams'
 import { boardConfig } from '@/data/boardConfig'
 import { fetchLogHistory, parseLogHistory } from '@/data/logHistory'
+import { postDiceRoll, DiceRollError } from '@/services/diceService'
 import type { Team, DiceRollEvent, TeamTaskProgress, RollHistoryEntry } from '@/types'
 
 const OVERLAY_MS = 3500
@@ -19,6 +20,8 @@ interface GameState {
   specialMoving: Record<string, boolean>
   historyIndex: number | null
   rollCooldownUntil: number | null
+  rolling: boolean
+  rollError: string | null
 }
 
 const baseTeams = parseTeams(fetchTeams())
@@ -35,10 +38,18 @@ const state = reactive<GameState>({
   specialMoving: {},
   historyIndex: null,
   rollCooldownUntil: null,
+  rolling: false,
+  rollError: null,
 })
 
 function canRoll(): boolean {
-  return state.rollCooldownUntil === null || Date.now() >= state.rollCooldownUntil
+  return (
+    !state.rolling && (state.rollCooldownUntil === null || Date.now() >= state.rollCooldownUntil)
+  )
+}
+
+function clearRollError() {
+  state.rollError = null
 }
 
 const animVersion: Record<string, number> = {}
@@ -237,16 +248,24 @@ function animateToken(teamId: string, from: number, toRaw: number, finalPos: num
   setTimeout(step, OVERLAY_MS)
 }
 
-function rollForTeam(teamId: string, forcedRoll?: number) {
+async function rollForTeam(teamId: string) {
   if (!canRoll()) return
 
   const team = state.teams.find((t) => t.id === teamId)
   if (!team) return
 
-  const roll =
-    forcedRoll !== undefined && forcedRoll >= 1 && forcedRoll <= 6
-      ? forcedRoll
-      : Math.ceil(Math.random() * 6)
+  state.rolling = true
+  state.rollError = null
+
+  let roll: number
+  try {
+    roll = await postDiceRoll(teamId)
+  } catch (err) {
+    state.rollError = err instanceof DiceRollError ? err.message : 'Failed to roll dice.'
+    return
+  } finally {
+    state.rolling = false
+  }
 
   const fromPosition = team.position
   const rawToPosition = Math.min(fromPosition + roll, boardConfig.totalTiles)
@@ -343,6 +362,7 @@ export const gameStore = {
   applyDiceRoll,
   rollForTeam,
   canRoll,
+  clearRollError,
   resetAll,
   updateTaskProgress,
   getTeamProgressOnTile,

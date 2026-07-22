@@ -150,6 +150,10 @@ const moveSummary = computed(() => {
   font-family: var(--font-display);
   font-size: 0.65rem;
   color: var(--osrs-gold);
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .dice-scene {

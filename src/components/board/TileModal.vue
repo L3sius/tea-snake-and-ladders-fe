@@ -297,6 +297,7 @@ function handleBackdropClick(e: MouseEvent) {
 
 .modal__team-info {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
@@ -306,6 +307,9 @@ function handleBackdropClick(e: MouseEvent) {
   font-size: 1.05rem;
   font-weight: 500;
   color: var(--osrs-text-bright);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .modal__progress-row {

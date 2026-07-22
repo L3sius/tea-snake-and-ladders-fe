@@ -26,7 +26,6 @@ export const boardConfig: BoardConfig = {
     { from: 9, to: 31 },
     { from: 20, to: 38 },
     { from: 21, to: 42 },
-    { from: 28, to: 84 },
     { from: 36, to: 44 },
     { from: 51, to: 67 },
     { from: 71, to: 91 },

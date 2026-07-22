@@ -1,76 +1,154 @@
 [
   {
     "id": 1,
-    "name": "Team One",
+    "name": "The Impregnators",
     "members": [
       {
         "displayName": "ZezimaJr",
-        "accounts": [{ "name": "ZezimaJr", "gold": 42300000, "items": 18 }]
+        "accounts": [
+          {
+            "name": "ZezimaJr",
+            "gold": 42300000,
+            "items": 18
+          }
+        ]
       },
       {
         "displayName": "DragonSlyr99",
         "accounts": [
-          { "name": "DragonSlyr99", "gold": 5200000000, "items": 48500 },
-          { "name": "DragonAlt77", "gold": 800000000, "items": 300 }
+          {
+            "name": "DragonSlyr99",
+            "gold": 5200000000,
+            "items": 48500
+          },
+          {
+            "name": "DragonAlt77",
+            "gold": 800000000,
+            "items": 300
+          }
         ]
       },
       {
         "displayName": "IronKnight",
-        "accounts": [{ "name": "IronKnight", "gold": 15600000, "items": 9 }]
+        "accounts": [
+          {
+            "name": "IronKnight",
+            "gold": 15600000,
+            "items": 9
+          }
+        ]
       },
       {
         "displayName": "PureRanger",
-        "accounts": [{ "name": "PureRanger", "gold": 63900000, "items": 21 }]
+        "accounts": [
+          {
+            "name": "PureRanger",
+            "gold": 63900000,
+            "items": 21
+          }
+        ]
       }
     ]
   },
   {
     "id": 2,
-    "name": "Team Two",
+    "name": "Nieve's Pussies",
     "members": [
       {
         "displayName": "MagicMage99",
-        "accounts": [{ "name": "MagicMage99", "gold": 55400000, "items": 16 }]
+        "accounts": [
+          {
+            "name": "MagicMage99",
+            "gold": 55400000,
+            "items": 16
+          }
+        ]
       },
       {
         "displayName": "SwiftArcher",
-        "accounts": [{ "name": "SwiftArcher", "gold": 29800000, "items": 12 }]
+        "accounts": [
+          {
+            "name": "SwiftArcher",
+            "gold": 29800000,
+            "items": 12
+          }
+        ]
       },
       {
         "displayName": "BoneCollect0r",
         "accounts": [
-          { "name": "BoneCollect0r", "gold": 55000000, "items": 18 },
-          { "name": "BoneAlt99", "gold": 30000000, "items": 9 }
+          {
+            "name": "BoneCollect0r",
+            "gold": 55000000,
+            "items": 18
+          },
+          {
+            "name": "BoneAlt99",
+            "gold": 30000000,
+            "items": 9
+          }
         ]
       },
       {
         "displayName": "GoldHoarder",
-        "accounts": [{ "name": "GoldHoarder", "gold": 74600000, "items": 19 }]
+        "accounts": [
+          {
+            "name": "GoldHoarder",
+            "gold": 74600000,
+            "items": 19
+          }
+        ]
       }
     ]
   },
   {
     "id": 3,
-    "name": "Team Three",
+    "name": "Pissweasels",
     "members": [
       {
         "displayName": "SkillMaster",
-        "accounts": [{ "name": "SkillMaster", "gold": 33100000, "items": 14 }]
+        "accounts": [
+          {
+            "name": "SkillMaster",
+            "gold": 33100000,
+            "items": 14
+          }
+        ]
       },
       {
         "displayName": "QuestCape99",
         "accounts": [
-          { "name": "QuestCape99", "gold": 48750000, "items": 20 },
-          { "name": "QuestAlt1", "gold": 10000000, "items": 4 }
+          {
+            "name": "QuestCape99",
+            "gold": 48750000,
+            "items": 20
+          },
+          {
+            "name": "QuestAlt1",
+            "gold": 10000000,
+            "items": 4
+          }
         ]
       },
       {
         "displayName": "NightWalker",
-        "accounts": [{ "name": "NightWalker", "gold": 19400000, "items": 7 }]
+        "accounts": [
+          {
+            "name": "NightWalker",
+            "gold": 19400000,
+            "items": 7
+          }
+        ]
       },
       {
         "displayName": "FireMage",
-        "accounts": [{ "name": "FireMage", "gold": 66200000, "items": 23 }]
+        "accounts": [
+          {
+            "name": "FireMage",
+            "gold": 66200000,
+            "items": 23
+          }
+        ]
       }
     ]
   }

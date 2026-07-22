@@ -141,6 +141,13 @@ const cooldownSecondsLeft = computed(() => {
   return Math.max(0, Math.ceil((until - now.value) / 1000))
 })
 const onCooldown = computed(() => cooldownSecondsLeft.value > 0)
+const rolling = computed(() => gameStore.state.rolling)
+const rollDisabled = computed(() => onCooldown.value || rolling.value)
+
+function selectTeam(teamId: string) {
+  gameStore.clearRollError()
+  selectedTeamId.value = teamId
+}
 
 function rollDice() {
   gameStore.jumpToLive()
@@ -317,25 +324,31 @@ function rollDice() {
               class="team-tab-chip"
               :class="{ 'team-tab-chip--active': team.id === selectedTeamId }"
               :style="team.id === selectedTeamId ? { '--chip-color': team.color } : undefined"
-              @click="selectedTeamId = team.id"
+              @click="selectTeam(team.id)"
             >
               {{ team.name }}
             </button>
           </div>
 
-          <div
-            v-if="selectedTeam"
-            class="team-preview"
-            :style="{ '--preview-color': selectedTeam.color }"
-          >
+          <div v-if="selectedTeam" class="team-preview">
             <div class="team-preview__logo">
               <TeamToken :team="selectedTeam" size="fill" />
             </div>
             <span class="team-preview__name">{{ selectedTeam.name }}</span>
           </div>
 
-          <button class="roll-btn" :disabled="onCooldown" @click="rollDice">
-            {{ onCooldown ? `ROLL DICE · ${cooldownSecondsLeft}s` : 'ROLL DICE' }}
+          <p v-if="gameStore.state.rollError" class="roll-error">
+            {{ gameStore.state.rollError }}
+          </p>
+
+          <button class="roll-btn" :disabled="rollDisabled" @click="rollDice">
+            {{
+              onCooldown
+                ? `ROLL DICE · ${cooldownSecondsLeft}s`
+                : rolling
+                  ? 'ROLLING…'
+                  : 'ROLL DICE'
+            }}
           </button>
         </div>
       </div>
@@ -699,6 +712,7 @@ function rollDice() {
 .team-tab-chip {
   display: flex;
   align-items: center;
+  max-width: 160px;
   padding: 0.4rem 0.8rem;
   font-family: var(--font-body);
   font-size: 0.85rem;
@@ -708,6 +722,9 @@ function rollDice() {
   border: 1px solid var(--osrs-border);
   border-radius: 999px;
   cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   transition:
     color var(--transition-fast),
     background var(--transition-fast),
@@ -733,17 +750,10 @@ function rollDice() {
   align-items: center;
   gap: 0.6rem;
   padding: 1.5rem 1rem;
-  background: radial-gradient(circle at 50% 0%, var(--osrs-panel-hover), var(--osrs-panel) 70%);
-  border: 1px solid var(--preview-color, var(--osrs-border));
-  border-radius: 14px;
-  box-shadow: 0 0 24px -8px var(--preview-color, transparent);
-  transition:
-    border-color var(--transition-normal),
-    box-shadow var(--transition-normal);
 }
 
 .team-preview__logo {
-  width: min(100%, 220px);
+  width: min(100%, 260px);
   aspect-ratio: 1;
 }
 
@@ -752,6 +762,15 @@ function rollDice() {
   font-size: 1.2rem;
   font-weight: 700;
   color: var(--osrs-text-bright);
+}
+
+.roll-error {
+  padding: 0.6rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--osrs-red);
+  background: var(--osrs-panel-light);
+  border: 1px solid var(--osrs-red);
+  border-radius: var(--border-radius);
 }
 
 .roll-btn {

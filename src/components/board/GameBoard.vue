@@ -21,6 +21,8 @@ const selectedTile = ref<Tile | null>(null)
 const activeDiceRoll = computed(() => gameStore.state.activeDiceRoll)
 const teams = computed(() => gameStore.state.teams)
 
+const HARDCODED_TILE_COMPLETED = true
+
 const teamsByTile = computed(() => {
   const map = new Map<number, Team[]>()
   for (const team of gameStore.state.teams) {
@@ -210,7 +212,12 @@ function ladderFeetTransform(ladder: LadderBody): string {
           class="token-overlay__token"
           :style="tokenStyle(team)"
         >
-          <TeamToken :team="team" size="sm" :style="{ width: '100%', height: '100%' }" />
+          <TeamToken
+            :team="team"
+            size="sm"
+            :completed="HARDCODED_TILE_COMPLETED"
+            :style="{ width: '100%', height: '100%' }"
+          />
         </div>
       </div>
 
