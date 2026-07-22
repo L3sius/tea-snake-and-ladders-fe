@@ -14,18 +14,9 @@ export interface LadderShape {
   angleDeg: number
 }
 
-// Half the distance between the two rails, and the spacing between rungs —
-// both in grid units, same coordinate space as everything else on the
-// board overlay. Kept narrow so the ladder doesn't obstruct the tile
-// artwork underneath.
 const RAIL_HALF_SPACING = 0.13
 const RUNG_SPACING = 0.31
 
-// A ladder is rigid and straight (unlike a snake's wiggly curve) — two
-// parallel rails offset perpendicular to the straight line between the two
-// tiles, with rungs at a fixed spacing along its length. Rungs are inset
-// from both ends so they don't land right on the feet image or the
-// destination tile center.
 export function buildLadderShape(from: Point, to: Point): LadderShape {
   const dx = to.x - from.x
   const dy = to.y - from.y

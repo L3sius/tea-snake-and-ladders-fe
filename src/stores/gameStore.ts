@@ -17,20 +17,12 @@ interface GameState {
   rollHistory: RollHistoryEntry[]
   displayedPositions: Record<string, number>
   specialMoving: Record<string, boolean>
-  // Number of chronological rolls applied to the board currently on screen.
-  // `null` means "live" — the board tracks each team's real position.
   historyIndex: number | null
-  // Anti-spam: no team can roll again until this timestamp (epoch ms).
-  // Global rather than per-team — any roll, by any team, locks out everyone.
   rollCooldownUntil: number | null
 }
 
-// Roster from the (currently mocked) getTeams — kept unmutated as the
-// position-1 baseline snapshotPositions replays forward from.
 const baseTeams = parseTeams(fetchTeams())
 
-// Seeded from the (currently mocked) log_history — parseLogHistory also
-// advances each team's `position` to its true latest tile as a side effect.
 const seededTeams = structuredClone(baseTeams)
 const seededHistory = parseLogHistory(fetchLogHistory(), seededTeams)
 
@@ -58,8 +50,6 @@ function applyDiceRoll(event: DiceRollEvent) {
   const finalPosition = event.snakeOrLadder?.finalPosition ?? event.toPosition
   team.position = finalPosition
 
-  // While browsing history, let the roll land silently — don't pop the dice
-  // overlay over a board the viewer isn't currently looking at.
   if (state.historyIndex !== null) return
 
   state.activeDiceRoll = event
@@ -69,17 +59,12 @@ function applyDiceRoll(event: DiceRollEvent) {
   }, OVERLAY_MS)
 }
 
-// Instantly re-targets a team's token, letting the board's own CSS
-// transition glide it there — used for arbitrary jumps (e.g. clicking a log
-// entry many rolls away) where crawling tile-by-tile would take too long.
 function glideTokenTo(teamId: string, target: number) {
   animVersion[teamId] = (animVersion[teamId] ?? 0) + 1
   delete state.specialMoving[teamId]
   state.displayedPositions[teamId] = target
 }
 
-// Replays `rollsApplied` chronological rolls to reconstruct where every team
-// stood on the board at that point.
 function snapshotPositions(rollsApplied: number): Record<string, number> {
   const positions: Record<string, number> = Object.fromEntries(
     baseTeams.map((t) => [t.id, t.position]),
@@ -99,10 +84,6 @@ function glideToSnapshot(rollsApplied: number) {
   }
 }
 
-// Steps a token tile-by-tile between `from` and `to` under a caller-supplied
-// animation version, so multi-phase sequences (crawl → pause → jump) can be
-// cancelled as a whole if superseded — the shared crawl used by both the
-// live roll and single-step history scrubbing.
 function crawlToken(
   teamId: string,
   myVersion: number,
@@ -128,8 +109,6 @@ function crawlToken(
   else setTimeout(step, STEP_MS)
 }
 
-// Replays one roll's animation forward — identical to what the live dice
-// roll shows (crawl to the snake/ladder head, pause, then slide to the end).
 function animateRollForward(entry: RollHistoryEntry) {
   const { teamId, fromPosition, toPosition, finalPosition } = entry
   animVersion[teamId] = (animVersion[teamId] ?? 0) + 1
@@ -151,8 +130,6 @@ function animateRollForward(entry: RollHistoryEntry) {
   })
 }
 
-// Mirrors `animateRollForward` in reverse — undoes the snake/ladder slide
-// first, then crawls back to where the team rolled from.
 function animateRollBackward(entry: RollHistoryEntry) {
   const { teamId, fromPosition, toPosition, finalPosition } = entry
   animVersion[teamId] = (animVersion[teamId] ?? 0) + 1
@@ -210,7 +187,6 @@ function stepHistoryNext() {
   animateRollForward(applied)
 }
 
-// `logIndex` is the position in `rollHistory` (0 = most recent entry).
 function viewRollAt(logIndex: number) {
   const total = state.rollHistory.length
   state.historyIndex = total - logIndex
@@ -241,12 +217,9 @@ function animateToken(teamId: string, from: number, toRaw: number, finalPos: num
     if (current < toRaw) {
       setTimeout(step, STEP_MS)
     } else if (finalPos !== toRaw) {
-      // Pause briefly on the snake/ladder tile so the player sees it land
       setTimeout(async () => {
         if (animVersion[teamId] !== myVersion) return
 
-        // Set the special (long) transition BEFORE the position changes,
-        // so Vue flushes the transition-duration style update first.
         state.specialMoving[teamId] = true
         await nextTick()
 
@@ -264,11 +237,6 @@ function animateToken(teamId: string, from: number, toRaw: number, finalPos: num
   setTimeout(step, OVERLAY_MS)
 }
 
-// No turn order — any team can roll anytime (subject to the global cooldown
-// below), since there's no per-team authorization on who triggers a roll.
-// Real task-completion gating (a team can't roll before finishing their
-// current tile's task) is left to the backend to enforce and error on —
-// this mock never blocks a roll for that reason.
 function rollForTeam(teamId: string, forcedRoll?: number) {
   if (!canRoll()) return
 
@@ -300,8 +268,6 @@ function rollForTeam(teamId: string, forcedRoll?: number) {
 
   applyDiceRoll(event)
 
-  // While browsing history, the roll still happens and joins the log —
-  // it just doesn't animate on screen until the viewer returns to live.
   if (state.historyIndex === null) {
     animateToken(
       team.id,

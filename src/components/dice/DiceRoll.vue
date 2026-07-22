@@ -10,22 +10,12 @@ const props = defineProps<{
 
 const team = computed(() => gameStore.state.teams.find((t) => t.id === props.event.teamId))
 
-// Reuses the board's green snake head as the dice pip icon (a small, fixed
-// choice rather than per-snake color — the dice isn't tied to any specific
-// snake) for a bit of theming instead of plain dots.
 const diceDotImage = SNAKE_COLOR_VARIANTS[0]!.headHref
 
-// This component only mounts when a new roll starts (gameStore sets/clears
-// activeDiceRoll), so mount time is exactly "a roll just happened" — for
-// both a locally-triggered roll and one arriving over SSE from another
-// viewer's roll, which is the point: the sound should draw everyone's
-// attention back to the page, not just the person who clicked the button.
-// play() is fired-and-forgotten — if the browser blocks it (no prior user
-// interaction on the page yet), it just stays silent instead of erroring.
 onMounted(() => {
   const audio = new Audio('/sounds/dice_roll.mp3')
   audio.volume = 0.6
-  audio.play().catch(() => { })
+  audio.play().catch(() => {})
 })
 
 const faceDots: Record<number, [number, number][]> = {
@@ -62,8 +52,6 @@ const faceDots: Record<number, [number, number][]> = {
   ],
 }
 
-// Standard opposite pairs: 1↔6, 2↔5, 3↔4
-// CSS face position: front=1, back=6, right=3, left=4, top=2, bottom=5
 const faces = [
   { cls: 'front', num: 1 },
   { cls: 'back', num: 6 },
@@ -91,10 +79,6 @@ const moveSummary = computed(() => {
         <span class="dice-roll-card__team-name">{{ team.name }}</span>
       </div>
 
-      <!-- Shared clip-path referenced by every pip below, across all 6 faces'
-           separate <svg> elements — hoisted out of the v-for so it exists
-           exactly once in the document instead of once per face with a
-           duplicate id. -->
       <svg width="0" height="0" style="position: absolute" aria-hidden="true">
         <defs>
           <clipPath id="dice-dot-clip" clipPathUnits="objectBoundingBox">
@@ -107,8 +91,17 @@ const moveSummary = computed(() => {
         <div class="dice-cube" :class="`roll-to-${event.roll}`">
           <div v-for="face in faces" :key="face.cls" :class="`dice-face dice-face--${face.cls}`">
             <svg viewBox="0 0 100 100" aria-hidden="true">
-              <image v-for="([cx, cy], i) in faceDots[face.num]" :key="i" :href="diceDotImage" :x="cx - 9" :y="cy - 9"
-                width="18" height="18" preserveAspectRatio="xMidYMid slice" clip-path="url(#dice-dot-clip)" />
+              <image
+                v-for="([cx, cy], i) in faceDots[face.num]"
+                :key="i"
+                :href="diceDotImage"
+                :x="cx - 9"
+                :y="cy - 9"
+                width="18"
+                height="18"
+                preserveAspectRatio="xMidYMid slice"
+                clip-path="url(#dice-dot-clip)"
+              />
             </svg>
           </div>
         </div>
@@ -159,7 +152,6 @@ const moveSummary = computed(() => {
   color: var(--osrs-gold);
 }
 
-/* ── 3-D cube ── */
 .dice-scene {
   perspective: 480px;
   perspective-origin: 50% 45%;
@@ -190,24 +182,6 @@ const moveSummary = computed(() => {
   height: 100%;
 }
 
-/*
- * Each face is pushed 55 px (half the cube side) outward along its own local Z.
- * Opposite-pair layout (standard dice): 1↔6  2↔5  3↔4
- *   front  = 1  →  translateZ(55px)
- *   back   = 6  →  rotateY(180deg)  translateZ(55px)
- *   right  = 3  →  rotateY(90deg)   translateZ(55px)   visible from the right
- *   left   = 4  →  rotateY(-90deg)  translateZ(55px)   visible from the left
- *   top    = 2  →  rotateX(90deg)   translateZ(55px)   visible from above
- *   bottom = 5  →  rotateX(-90deg)  translateZ(55px)   visible from below
- *
- * To reveal a face the CUBE rotates by the inverse of that face's transform:
- *   face 1 → rotateY(720deg)   (2 full turns, lands on front)
- *   face 2 → rotateX(630deg)   (720 − 90)
- *   face 3 → rotateY(630deg)   (720 − 90)
- *   face 4 → rotateY(810deg)   (720 + 90)
- *   face 5 → rotateX(810deg)   (720 + 90)
- *   face 6 → rotateY(900deg)   (720 + 180)
- */
 .dice-face--front {
   transform: translateZ(55px);
 }
@@ -232,14 +206,6 @@ const moveSummary = computed(() => {
   transform: rotateX(-90deg) translateZ(55px);
 }
 
-/* ── Roll animations ──
- * Only rotateX / rotateY — no rotateZ.
- * Faces 1, 3, 4, 6 roll horizontally (Y-axis).
- * Faces 2, 5       roll vertically   (X-axis).
- * A small secondary-axis wobble (≤ 10°) makes it feel physical.
- * animation-timing-function: ease-out gives fast start → gradual stop.
- */
-
 .roll-to-1 {
   animation: roll-to-1 2.8s ease-out both;
 }
@@ -263,11 +229,6 @@ const moveSummary = computed(() => {
 .roll-to-6 {
   animation: roll-to-6 2.8s ease-out both;
 }
-
-/* Both axes move throughout — the die tumbles freely in 3D.
- * Final frame brings the correct face to front (no rotateZ anywhere).
- * End values: face1=X720 Y720, face2=X630 Y720, face3=X720 Y630,
- *             face4=X720 Y810, face5=X810 Y720, face6=X720 Y900     */
 
 @keyframes roll-to-1 {
   0% {

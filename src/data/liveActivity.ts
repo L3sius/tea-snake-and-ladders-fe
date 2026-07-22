@@ -1,8 +1,6 @@
 import type { ActivityEntry } from '@/types'
 import mockLiveActivity from './mockLiveActivity.json'
 
-// Wire format for the `getLiveActivity` SSE payload — keyed by sequence
-// number, each a plain display-only entry (no team/account linkage).
 export interface RawLiveActivityEntry {
   name: string
   event: string
@@ -11,8 +9,6 @@ export interface RawLiveActivityEntry {
 
 export type RawLiveActivity = Record<string, RawLiveActivityEntry>
 
-// TEMP: stands in for the real `getLiveActivity` SSE call until it exists —
-// same seam pattern as fetchLogHistory in logHistory.ts.
 export function fetchLiveActivity(): RawLiveActivity {
   return mockLiveActivity as RawLiveActivity
 }
@@ -30,5 +26,5 @@ export function parseLiveActivity(raw: RawLiveActivity): ActivityEntry[] {
         timestamp: new Date(entry.timestamp),
       }
     })
-    .reverse() // newest-first, matching rollHistory's convention
+    .reverse()
 }

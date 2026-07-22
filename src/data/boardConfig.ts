@@ -65,10 +65,6 @@ export function getTileSvgCenter(tileId: number): { cx: number; cy: number } {
   }
 }
 
-// Same tile center, but in raw grid units (0..columns, 0..rows) rather than
-// a 0-100 percentage — for an SVG overlay whose viewBox is sized in grid
-// units directly, so curve/taper math never needs a percentage conversion
-// and never needs recalculating on resize (the viewBox scales with CSS).
 export function getTileGridCenter(tileId: number): { cx: number; cy: number } {
   const { col, row } = getTilePosition(tileId)
   return { cx: col - 0.5, cy: row - 0.5 }

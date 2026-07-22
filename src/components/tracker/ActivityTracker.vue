@@ -9,19 +9,14 @@ import RollLog from './RollLog.vue'
 import type { Team, TeamMember } from '@/types'
 
 const props = defineProps<{
-  // Desktop shows Roll Log as its own always-visible column instead —
-  // set by BoardView so the tab isn't duplicated there.
   hideRollLogTab?: boolean
 }>()
 
 type Tab = 'live' | 'log' | 'leaderboard' | 'stats' | 'roll'
 const activeTab = ref<Tab>('live')
 
-// --- Live Updates tab ---
-// TEMP: mocked until getLiveActivity exists — see liveActivity.ts.
 const liveActivity = parseLiveActivity(fetchLiveActivity())
 
-// --- Leaderboard tab ---
 const rankedTeams = computed(() =>
   [...gameStore.state.teams].sort((a, b) => b.position - a.position),
 )
@@ -41,15 +36,10 @@ const rollsMadeByTeam = computed(() => {
   return counts
 })
 
-// Leaderboard has no click-to-expand (it's meant to be fully visible at a
-// glance), so alts are just listed alongside the player's name instead.
 function altAccountNames(member: TeamMember): string[] {
   return member.accounts.filter((a) => a.name !== member.displayName).map((a) => a.name)
 }
 
-// --- Stats tab ---
-// Rosters are capped at 8 players per team, so the full gold-sorted list is
-// always shown — no teaser/expand needed.
 interface TeamStats {
   team: Team
   gold: number
@@ -57,8 +47,6 @@ interface TeamStats {
   actions: number
 }
 
-// A player's gold/items is the sum across every account (main + alts) they
-// control — see PlayerAccount/TeamMember in types/index.ts.
 function memberTotals(member: TeamMember): { gold: number; items: number } {
   return member.accounts.reduce(
     (acc, a) => ({ gold: acc.gold + a.gold, items: acc.items + a.items }),
@@ -66,12 +54,6 @@ function memberTotals(member: TeamMember): { gold: number; items: number } {
   )
 }
 
-// POC: "actions generated" — counts liveActivity entries per player. Real
-// version will come from getGlobalStats pre-summed; for now this is derived
-// client-side from the mock feed, same pattern as rolls-made from
-// log_history. liveActivity's `player` may name an alt account rather than
-// the display name, so entries are attributed via the account -> owner map
-// below rather than a plain name match.
 const accountOwner = computed(() => {
   const map = new Map<string, { teamId: string; displayName: string }>()
   for (const team of gameStore.state.teams) {
@@ -85,7 +67,7 @@ const accountOwner = computed(() => {
 })
 
 const actionsByMember = computed(() => {
-  const counts = new Map<string, number>() // keyed by memberKey(teamId, displayName)
+  const counts = new Map<string, number>()
   for (const entry of liveActivity) {
     const owner = accountOwner.value.get(entry.player)
     if (!owner) continue
@@ -133,23 +115,15 @@ function sortedMembers(team: Team) {
   return [...team.members].sort((a, b) => memberTotals(b).gold - memberTotals(a).gold)
 }
 
-// Scoped to a team, since display names aren't globally unique — used to key
-// the actionsByMember lookup above.
 function memberKey(teamId: string, displayName: string): string {
   return `${teamId}::${displayName}`
 }
 
-// --- Roll Dice tab ---
-// This is the real dice-roll trigger — any team can roll anytime, no
-// authorization, picked here from the team tabs. A real backend would
-// reject a roll for a team that hasn't completed its current tile's task;
-// this mock never checks that.
 const selectedTeamId = ref(gameStore.state.teams[0]?.id ?? '')
 const selectedTeam = computed(() =>
   gameStore.state.teams.find((t) => t.id === selectedTeamId.value),
 )
 
-// Ticks while mounted so the cooldown countdown below stays live.
 const now = ref(Date.now())
 let cooldownInterval: ReturnType<typeof setInterval> | undefined
 onMounted(() => {
@@ -161,8 +135,6 @@ onUnmounted(() => {
   clearInterval(cooldownInterval)
 })
 
-// Anti-spam cooldown is global (any roll locks out every team), not just
-// the selected one — see rollCooldownUntil in gameStore.
 const cooldownSecondsLeft = computed(() => {
   const until = gameStore.state.rollCooldownUntil
   if (until === null) return 0
@@ -171,9 +143,6 @@ const cooldownSecondsLeft = computed(() => {
 const onCooldown = computed(() => cooldownSecondsLeft.value > 0)
 
 function rollDice() {
-  // Clicking Roll Dice is a clear signal the user wants to see it happen —
-  // jump to live first so the overlay/animation actually plays, rather than
-  // landing silently the way an unrelated roll would while browsing history.
   gameStore.jumpToLive()
   gameStore.rollForTeam(selectedTeamId.value)
 }
@@ -222,7 +191,6 @@ function rollDice() {
     </div>
 
     <div class="tracker-body">
-      <!-- Live Updates -->
       <ul v-if="activeTab === 'live'" class="live-list">
         <li v-for="entry in liveActivity" :key="entry.id" class="live-entry">
           <span class="live-entry__age">{{ formatRelativeTime(entry.timestamp) }}</span>
@@ -231,10 +199,8 @@ function rollDice() {
         </li>
       </ul>
 
-      <!-- Roll Log (mobile-only tab — desktop shows it as its own column) -->
       <RollLog v-else-if="activeTab === 'log'" />
 
-      <!-- Leaderboard -->
       <div v-else-if="activeTab === 'leaderboard'" class="leaderboard-table">
         <div class="leaderboard-table__header">
           <span></span>
@@ -271,7 +237,6 @@ function rollDice() {
         </div>
       </div>
 
-      <!-- Stats -->
       <div v-else-if="activeTab === 'stats'" class="stats-panel">
         <div class="stats-summary">
           <div class="stats-summary__stat">
@@ -343,7 +308,6 @@ function rollDice() {
         </div>
       </div>
 
-      <!-- Roll Dice -->
       <div v-else class="roll-tab">
         <div class="roll-panel">
           <div class="team-tabs">
@@ -387,7 +351,6 @@ function rollDice() {
   min-height: 0;
 }
 
-/* ── Tabs ── */
 .tracker-tabs {
   display: flex;
   gap: 2px;
@@ -423,11 +386,6 @@ function rollDice() {
   background: var(--osrs-panel-hover);
 }
 
-/* On a phone-width screen, 5 tabs with nowrap labels don't fit in one row —
- * flex items default to min-width: auto, so instead of shrinking they just
- * push the row past the screen edge. Let it scroll horizontally instead,
- * with each tab kept at its natural (readable) width. Desktop's sidebar is
- * wide enough that this never kicks in there. */
 @media (max-width: 768px) {
   .tracker-tabs {
     overflow-x: auto;
@@ -459,7 +417,6 @@ function rollDice() {
   flex-shrink: 0;
 }
 
-/* ── Body ── */
 .tracker-body {
   flex: 1;
   display: flex;
@@ -469,7 +426,6 @@ function rollDice() {
   padding: 0.4rem 0;
 }
 
-/* ── Live list ── */
 .live-list {
   list-style: none;
   display: flex;
@@ -510,9 +466,6 @@ function rollDice() {
   color: var(--osrs-text-muted);
 }
 
-/* ── Leaderboard ──
- * Columns are kept deliberately compact — this now lives inside a sidebar
- * (or a mobile page), never the wide standalone page it used to be. */
 .leaderboard-table {
   display: flex;
   flex-direction: column;
@@ -531,19 +484,10 @@ function rollDice() {
   border-bottom: 1px solid var(--osrs-border);
 }
 
-/* A divider line rather than relying on right-aligned text spacing — a
- * fixed border + padding-left gives a consistent gap after each divider
- * regardless of the column's width, unlike right-aligning words of
- * different lengths into columns of different widths (which was the
- * previous "smushed" look on the narrower columns). */
 .stats-table__header-num {
   text-align: center;
 }
 
-/* Grid items default to min-width: auto, which floors this cell at its own
- * text's min-content width — same fix as .team-cell below, but that one
- * only covers the value rows, not this header label. Without it, the
- * header can overflow its container even when the row underneath doesn't. */
 .stats-table__header-name {
   min-width: 0;
   overflow: hidden;
@@ -575,9 +519,6 @@ function rollDice() {
   border-color: var(--osrs-border-gold);
 }
 
-/* Leaderboard rows are display-only now (members list underneath instead of
- * a click-to-open modal) — cancel the clickable cursor/hover the shared
- * .leaderboard-table__row styling implies. */
 .leaderboard-table__row--static {
   cursor: default;
 }
@@ -601,10 +542,6 @@ function rollDice() {
   opacity: 0.75;
 }
 
-/* ── Stats ──
- * Reuses the leaderboard table styles (same shape of data: rank, team,
- * numeric columns) but the Gold column needs more room than a tile
- * number or roll count ever did. */
 .stats-panel {
   display: flex;
   flex-direction: column;
@@ -662,8 +599,6 @@ function rollDice() {
 
 .stats-member {
   display: grid;
-  /* Matches the gold/items/actions column widths on .stats-table__row above,
-   * so the numbers line up vertically between team and member rows. */
   grid-template-columns: 1fr 85px 55px 55px;
   gap: 0.4rem;
   align-items: center;
@@ -738,10 +673,6 @@ function rollDice() {
   white-space: nowrap;
 }
 
-/* ── Roll Dice ──
- * Deliberately breaks from the rest of the app's sharp 2px pixel-UI radius —
- * this is the one interactive "hero" action on this tab, so it gets a
- * softer, more contemporary card treatment instead. */
 .roll-tab {
   display: flex;
   flex-direction: column;
@@ -811,8 +742,6 @@ function rollDice() {
     box-shadow var(--transition-normal);
 }
 
-/* Fills as much of the preview card as it can, up to a sensible cap — see
- * .team-token--fill, which lets this container fully control the size. */
 .team-preview__logo {
   width: min(100%, 220px);
   aspect-ratio: 1;

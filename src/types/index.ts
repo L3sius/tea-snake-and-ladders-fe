@@ -15,15 +15,12 @@ export interface TeamTaskProgress {
   dropsCollected: number
 }
 
-// A single RuneScape account's contribution.
 export interface PlayerAccount {
   name: string
   gold: number
   items: number
 }
 
-// A real person, who may play on more than one account (mains + alts) —
-// their gold/items are the sum across every account they control.
 export interface TeamMember {
   displayName: string
   accounts: PlayerAccount[]

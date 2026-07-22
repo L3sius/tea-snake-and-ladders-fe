@@ -29,11 +29,6 @@ import RollLog from '@/components/tracker/RollLog.vue'
 
 .board-view__tracker,
 .board-view__rolllog {
-  /* ActivityTracker/RollLog's own root sets `flex: 1` (flex-basis: 0%) for
-   * when they fill a lone container — `width` alone can't override that
-   * (flex-basis wins over width whenever it isn't `auto`), so the flex
-   * shorthand has to be reset here explicitly or all three columns end up
-   * splitting the row evenly regardless of this width. */
   position: sticky;
   top: 1rem;
   display: flex;
@@ -41,8 +36,6 @@ import RollLog from '@/components/tracker/RollLog.vue'
 }
 
 .board-view__tracker {
-  /* Wider than the roll log — the Stats tab's Gold/Items/Actions table needs
-   * the extra room to keep its headers from feeling cramped. */
   flex: 0 0 25%;
 }
 
@@ -57,17 +50,10 @@ import RollLog from '@/components/tracker/RollLog.vue'
   justify-content: center;
 }
 
-/* Below this width the Activity Tracker and Roll Log live on their own
- * full-screen tabs (reached via the bottom tab bar) instead of side
- * columns, so the board gets the whole screen to itself. */
 @media (max-width: 768px) {
   .board-view {
     padding: 0;
     overflow: auto;
-    /* The board is width-bound on narrow phones (it can only be as tall as
-     * it is wide), so it rarely fills the full viewport height — center it
-     * instead of pinning it to the top, so the leftover space reads as
-     * intentional breathing room rather than a layout gap. */
     align-items: center;
   }
 

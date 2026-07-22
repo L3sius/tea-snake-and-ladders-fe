@@ -3,9 +3,6 @@ export interface Point {
   y: number
 }
 
-// Deterministic PRNG (mulberry32) so a given snake's wiggle is identical on
-// every render/remount — seeded by the snake's own `from` tile id, which is
-// already unique per snake in boardConfig.
 function mulberry32(seed: number): () => number {
   let a = seed
   return () => {
@@ -18,14 +15,8 @@ function mulberry32(seed: number): () => number {
 }
 
 const WIGGLE_MIDPOINTS = 4
-// Max perpendicular offset for a midpoint, as a fraction of the snake's
-// straight-line head-to-tail length.
 const WIGGLE_AMPLITUDE_RATIO = 0.12
 
-// The head→tail point sequence a snake's body curve passes through: the
-// straight line between the two tiles, with a handful of midpoints
-// perturbed perpendicular to it (alternating sides) so the body actually
-// slithers instead of tracing one smooth arc.
 export function buildWigglePoints(from: Point, to: Point, seed: number): Point[] {
   const random = mulberry32(seed)
   const dx = to.x - from.x
@@ -55,9 +46,6 @@ interface BezierSegment {
   p3: Point
 }
 
-// Converts a point sequence into cubic bezier segments via a uniform
-// Catmull-Rom spline (the standard conversion, since neither SVG paths nor
-// plain bezier math have a native Catmull-Rom primitive).
 function catmullRomSegments(points: Point[]): BezierSegment[] {
   if (points.length < 2) return []
   if (points.length === 2) {
@@ -98,8 +86,6 @@ function evalBezier(seg: BezierSegment, t: number): Point {
   }
 }
 
-// Analytic derivative of the cubic bezier — the exact tangent direction at
-// t, no numerical sampling/probing required.
 function evalBezierTangent(seg: BezierSegment, t: number): Point {
   const mt = 1 - t
   return {
@@ -119,11 +105,6 @@ interface CurveSample {
   tangentAngleDeg: number
 }
 
-// Samples `count` points spread evenly across all bezier segments (by
-// parameter, not exact arc length — with this many samples and this little
-// wiggle, the difference isn't visible), each with its exact analytic
-// tangent. Fully synchronous — no rendered DOM element required, unlike
-// getPointAtLength, which removes any mount-timing dependency for callers.
 function sampleCurve(segments: BezierSegment[], count: number): CurveSample[] {
   if (segments.length === 0) return []
   const samples: CurveSample[] = []
@@ -143,12 +124,8 @@ function sampleCurve(segments: BezierSegment[], count: number): CurveSample[] {
 }
 
 const RIBBON_SAMPLES = 48
-// Thin enough not to obstruct the tile artwork underneath.
 const HEAD_WIDTH = 0.3
 const TAIL_WIDTH = 0.05
-// Eases the taper so the body stays thicker for longer and narrows more
-// sharply right at the tail tip, rather than shrinking at a constant rate —
-// closer to how a real snake's body actually tapers.
 const TAPER_EASE_POWER = 1.6
 
 export interface SnakeRibbon {
@@ -157,10 +134,6 @@ export interface SnakeRibbon {
   headAngleDeg: number
 }
 
-// The full snake body as a single filled ribbon shape (not a stroked line)
-// — width varies continuously along its length via analytic sampling, so
-// the taper has no hard steps, and the whole shape (not just a stroke) is
-// available as a fill target for a texture pattern.
 export function buildSnakeRibbon(from: Point, to: Point, seed: number): SnakeRibbon {
   const segments = catmullRomSegments(buildWigglePoints(from, to, seed))
   const samples = sampleCurve(segments, RIBBON_SAMPLES)
@@ -177,8 +150,6 @@ export function buildSnakeRibbon(from: Point, to: Point, seed: number): SnakeRib
     const t = i / (n - 1)
     const width = TAIL_WIDTH + (HEAD_WIDTH - TAIL_WIDTH) * Math.pow(1 - t, TAPER_EASE_POWER)
     const rad = (tangentAngleDeg * Math.PI) / 180
-    // Tangent rotated 90° = the local normal, offset each side by half the
-    // taper width at this point.
     const nx = -Math.sin(rad)
     const ny = Math.cos(rad)
     const half = width / 2
@@ -186,10 +157,6 @@ export function buildSnakeRibbon(from: Point, to: Point, seed: number): SnakeRib
     right.push({ x: point.x - nx * half, y: point.y - ny * half })
   }
 
-  // Rounds the tail tip instead of chopping it off flat: a quadratic bezier
-  // from the last left-edge point to the last right-edge point, bulging
-  // outward past the centerline (in the direction of travel) rather than
-  // cutting straight across.
   const lastSample = samples[n - 1]!
   const lastRad = (lastSample.tangentAngleDeg * Math.PI) / 180
   const tailBulge = TAIL_WIDTH * 0.9

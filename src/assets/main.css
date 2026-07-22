@@ -1,28 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;500;700&display=swap');
 
 :root {
-  /* Core palette — shades of green throughout (the snake's colour), instead
-   * of the original treasure-brown, so the whole page reads as Snakes &
-   * Ladders rather than generic OSRS-gold. Each value below is a hue-rotated
-   * counterpart of its old brown, keeping the same lightness/contrast. */
   --osrs-bg: #081208;
   --osrs-bg-alt: #050a05;
-  /* Panels (Activity Tracker, Roll Log, Dev Tools) keep the page's previous,
-   * slightly lighter background tone — a fixed value, not tied to
-   * --osrs-bg, since the two were only meant to match once, not stay linked. */
   --osrs-panel: #0f1a11;
   --osrs-panel-light: #244a2c;
   --osrs-panel-hover: #2f5c38;
 
-  /* Borders */
   --osrs-border: #3f6b3a;
   --osrs-border-light: #a9d18a;
-  /* "Gold" is now the snake's own colour (see the board's snake SVG lines)
-   * so the page's primary accent visually ties back to snakes & ladders
-   * instead of an arbitrary treasure-gold. */
   --osrs-border-gold: #27ae60;
 
-  /* Text */
   --osrs-text: #d7e8b3;
   --osrs-text-muted: #93a37c;
   --osrs-text-bright: #f2fbe9;
@@ -31,7 +19,6 @@
   --osrs-green: #27ae60;
   --osrs-blue: #2980b9;
 
-  /* Tier colours */
   --tier1-bg: #1a3320;
   --tier1-border: #2ecc71;
   --tier1-text: #a8e6c0;
@@ -42,16 +29,13 @@
   --tier3-border: #e74c3c;
   --tier3-text: #f0a0a0;
 
-  /* Typography */
   --font-display: 'Press Start 2P', monospace;
   --font-body: 'Roboto', sans-serif;
 
-  /* Spacing */
   --panel-padding: 1rem;
   --border-radius: 2px;
   --bottom-tabbar-height: 56px;
 
-  /* Transitions */
   --transition-fast: 120ms ease;
   --transition-normal: 250ms ease;
 }
@@ -92,7 +76,6 @@ a:hover {
   color: var(--osrs-border-light);
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -111,7 +94,6 @@ a:hover {
   background: var(--osrs-border-light);
 }
 
-/* Utility classes */
 .osrs-panel {
   background: var(--osrs-panel);
   border: 2px solid var(--osrs-border);

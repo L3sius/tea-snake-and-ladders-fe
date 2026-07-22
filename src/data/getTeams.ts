@@ -2,17 +2,12 @@ import type { Team, TeamMember } from '@/types'
 import mockGetTeams from './mockGetTeams.json'
 import { teamPresentation } from './teamPresentation'
 
-// Wire format for the `getTeams` REST response — id/name/members only.
-// color/logoPath are frontend-owned (see teamPresentation.ts) and never
-// sent by the backend.
 export interface RawTeam {
   id: number
   name: string
   members: TeamMember[]
 }
 
-// TEMP: stands in for the real `getTeams` REST call until it exists — same
-// seam pattern as fetchLogHistory in logHistory.ts.
 export function fetchTeams(): RawTeam[] {
   return mockGetTeams as RawTeam[]
 }

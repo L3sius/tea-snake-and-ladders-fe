@@ -22,8 +22,6 @@ const historyLabel = computed(() => {
   return `Roll ${historyIndex.value} / ${rollHistory.value.length}`
 })
 
-// Lets players focused on their own team's progress cut out the noise from
-// the other five without losing the ability to still scrub the full log.
 const selectedTeamId = ref<string | null>(null)
 
 function toggleTeamFilter(teamId: string) {
@@ -35,9 +33,6 @@ interface LoggedRoll {
   idx: number
 }
 
-// `idx` is the entry's position in the unfiltered `rollHistory` array —
-// preserved through filtering/grouping so Prev/Next/click-to-jump still
-// address the right point in the full game history.
 const filteredEntries = computed<LoggedRoll[]>(() => {
   const withIndex = rollHistory.value.map((entry, idx) => ({ entry, idx }))
   if (!selectedTeamId.value) return withIndex
@@ -59,8 +54,6 @@ function dayLabel(date: Date): string {
   return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
 
-// rollHistory is newest-first and roughly chronological, so same-day entries
-// are always contiguous — a single pass is enough to group them.
 const groupedEntries = computed<DayGroup[]>(() => {
   const groups: DayGroup[] = []
   for (const roll of filteredEntries.value) {
@@ -222,7 +215,6 @@ function formatTime(date: Date): string {
   font-style: italic;
 }
 
-/* ── History nav ── */
 .history-nav {
   display: flex;
   align-items: center;
@@ -279,7 +271,6 @@ function formatTime(date: Date): string {
   cursor: default;
 }
 
-/* ── Team filter ── */
 .team-filter {
   display: flex;
   flex-wrap: wrap;
@@ -324,7 +315,6 @@ function formatTime(date: Date): string {
   flex-shrink: 0;
 }
 
-/* ── Roll groups ── */
 .roll-groups {
   display: flex;
   flex-direction: column;
@@ -345,7 +335,6 @@ function formatTime(date: Date): string {
   z-index: 1;
 }
 
-/* ── Roll list ── */
 .roll-list {
   list-style: none;
   display: flex;

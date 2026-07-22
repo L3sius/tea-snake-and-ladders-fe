@@ -1,7 +1,3 @@
-// One entry per available color combo a snake can be rendered in — shared
-// between GameBoard (body/head on the board overlay) and TileModal (the
-// head tile's detail view), so the same snake always shows the same color
-// in both places.
 export interface SnakeColorVariant {
   headHref: string
   patternHref: string
@@ -30,8 +26,6 @@ export const SNAKE_COLOR_VARIANTS: SnakeColorVariant[] = [
   },
 ]
 
-// Deterministic per-snake pick, seeded by the snake's own `from` tile id —
-// same seed dimension GameBoard already uses for that snake's wiggle shape.
 export function getSnakeColor(fromTileId: number): SnakeColorVariant {
   return SNAKE_COLOR_VARIANTS[fromTileId % SNAKE_COLOR_VARIANTS.length]!
 }

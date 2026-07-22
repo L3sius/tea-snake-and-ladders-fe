@@ -22,10 +22,6 @@ const tierLabel: Record<1 | 2 | 3, string> = {
   3: 'Tier 3 — Hard',
 }
 
-// A snake's head tile has no real task — its "image" is just a generic
-// background filler. Rather than hide it, show that background with the
-// snake's own head image composited on top (matching the color it renders
-// with on the board), same idea as GameBoard's per-snake color variant.
 const snakeColor = computed(() => {
   if (!tile.value) return null
   const snake = boardConfig.snakes.find((s) => s.from === tile.value!.id)
@@ -256,9 +252,6 @@ function handleBackdropClick(e: MouseEvent) {
   align-self: center;
 }
 
-/* The bigger image needs more room than it can share with the description
- * text on a narrower screen — stack them instead of squeezing both into
- * one row. Raised from 480px since the modal itself is much wider now. */
 @media (max-width: 680px) {
   .modal__task {
     flex-direction: column;
@@ -352,7 +345,6 @@ function handleBackdropClick(e: MouseEvent) {
   font-style: italic;
 }
 
-/* Transition */
 .modal-enter-active,
 .modal-leave-active {
   transition: opacity var(--transition-normal);
