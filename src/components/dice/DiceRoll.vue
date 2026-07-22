@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { gameStore } from '@/stores/gameStore'
+import { SNAKE_COLOR_VARIANTS } from '@/utils/snakeColors'
 import type { DiceRollEvent } from '@/types'
 
 const props = defineProps<{
@@ -8,6 +9,24 @@ const props = defineProps<{
 }>()
 
 const team = computed(() => gameStore.state.teams.find((t) => t.id === props.event.teamId))
+
+// Reuses the board's green snake head as the dice pip icon (a small, fixed
+// choice rather than per-snake color — the dice isn't tied to any specific
+// snake) for a bit of theming instead of plain dots.
+const diceDotImage = SNAKE_COLOR_VARIANTS[0]!.headHref
+
+// This component only mounts when a new roll starts (gameStore sets/clears
+// activeDiceRoll), so mount time is exactly "a roll just happened" — for
+// both a locally-triggered roll and one arriving over SSE from another
+// viewer's roll, which is the point: the sound should draw everyone's
+// attention back to the page, not just the person who clicked the button.
+// play() is fired-and-forgotten — if the browser blocks it (no prior user
+// interaction on the page yet), it just stays silent instead of erroring.
+onMounted(() => {
+  const audio = new Audio('/sounds/dice_roll.mp3')
+  audio.volume = 0.6
+  audio.play().catch(() => { })
+})
 
 const faceDots: Record<number, [number, number][]> = {
   1: [[50, 50]],
@@ -72,18 +91,24 @@ const moveSummary = computed(() => {
         <span class="dice-roll-card__team-name">{{ team.name }}</span>
       </div>
 
+      <!-- Shared clip-path referenced by every pip below, across all 6 faces'
+           separate <svg> elements — hoisted out of the v-for so it exists
+           exactly once in the document instead of once per face with a
+           duplicate id. -->
+      <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+        <defs>
+          <clipPath id="dice-dot-clip" clipPathUnits="objectBoundingBox">
+            <circle cx="0.5" cy="0.5" r="0.5" />
+          </clipPath>
+        </defs>
+      </svg>
+
       <div class="dice-scene">
         <div class="dice-cube" :class="`roll-to-${event.roll}`">
           <div v-for="face in faces" :key="face.cls" :class="`dice-face dice-face--${face.cls}`">
             <svg viewBox="0 0 100 100" aria-hidden="true">
-              <circle
-                v-for="([cx, cy], i) in faceDots[face.num]"
-                :key="i"
-                :cx="cx"
-                :cy="cy"
-                r="9"
-                fill="#1b3320"
-              />
+              <image v-for="([cx, cy], i) in faceDots[face.num]" :key="i" :href="diceDotImage" :x="cx - 9" :y="cy - 9"
+                width="18" height="18" preserveAspectRatio="xMidYMid slice" clip-path="url(#dice-dot-clip)" />
             </svg>
           </div>
         </div>
@@ -186,18 +211,23 @@ const moveSummary = computed(() => {
 .dice-face--front {
   transform: translateZ(55px);
 }
+
 .dice-face--back {
   transform: rotateY(180deg) translateZ(55px);
 }
+
 .dice-face--right {
   transform: rotateY(90deg) translateZ(55px);
 }
+
 .dice-face--left {
   transform: rotateY(-90deg) translateZ(55px);
 }
+
 .dice-face--top {
   transform: rotateX(90deg) translateZ(55px);
 }
+
 .dice-face--bottom {
   transform: rotateX(-90deg) translateZ(55px);
 }
@@ -213,18 +243,23 @@ const moveSummary = computed(() => {
 .roll-to-1 {
   animation: roll-to-1 2.8s ease-out both;
 }
+
 .roll-to-2 {
   animation: roll-to-2 2.8s ease-out both;
 }
+
 .roll-to-3 {
   animation: roll-to-3 2.8s ease-out both;
 }
+
 .roll-to-4 {
   animation: roll-to-4 2.8s ease-out both;
 }
+
 .roll-to-5 {
   animation: roll-to-5 2.8s ease-out both;
 }
+
 .roll-to-6 {
   animation: roll-to-6 2.8s ease-out both;
 }
@@ -238,18 +273,23 @@ const moveSummary = computed(() => {
   0% {
     transform: rotateX(0deg) rotateY(0deg);
   }
+
   20% {
     transform: rotateX(320deg) rotateY(220deg);
   }
+
   40% {
     transform: rotateX(580deg) rotateY(470deg);
   }
+
   60% {
     transform: rotateX(672deg) rotateY(590deg);
   }
+
   80% {
     transform: rotateX(708deg) rotateY(665deg);
   }
+
   100% {
     transform: rotateX(720deg) rotateY(720deg);
   }
@@ -259,18 +299,23 @@ const moveSummary = computed(() => {
   0% {
     transform: rotateX(0deg) rotateY(0deg);
   }
+
   20% {
     transform: rotateX(260deg) rotateY(240deg);
   }
+
   40% {
     transform: rotateX(470deg) rotateY(490deg);
   }
+
   60% {
     transform: rotateX(560deg) rotateY(625deg);
   }
+
   80% {
     transform: rotateX(602deg) rotateY(692deg);
   }
+
   100% {
     transform: rotateX(630deg) rotateY(720deg);
   }
@@ -280,18 +325,23 @@ const moveSummary = computed(() => {
   0% {
     transform: rotateX(0deg) rotateY(0deg);
   }
+
   20% {
     transform: rotateX(230deg) rotateY(215deg);
   }
+
   40% {
     transform: rotateX(490deg) rotateY(450deg);
   }
+
   60% {
     transform: rotateX(641deg) rotateY(558deg);
   }
+
   80% {
     transform: rotateX(702deg) rotateY(602deg);
   }
+
   100% {
     transform: rotateX(720deg) rotateY(630deg);
   }
@@ -301,18 +351,23 @@ const moveSummary = computed(() => {
   0% {
     transform: rotateX(0deg) rotateY(0deg);
   }
+
   20% {
     transform: rotateX(250deg) rotateY(270deg);
   }
+
   40% {
     transform: rotateX(500deg) rotateY(540deg);
   }
+
   60% {
     transform: rotateX(645deg) rotateY(698deg);
   }
+
   80% {
     transform: rotateX(703deg) rotateY(764deg);
   }
+
   100% {
     transform: rotateX(720deg) rotateY(810deg);
   }
@@ -322,18 +377,23 @@ const moveSummary = computed(() => {
   0% {
     transform: rotateX(0deg) rotateY(0deg);
   }
+
   20% {
     transform: rotateX(285deg) rotateY(235deg);
   }
+
   40% {
     transform: rotateX(550deg) rotateY(485deg);
   }
+
   60% {
     transform: rotateX(699deg) rotateY(620deg);
   }
+
   80% {
     transform: rotateX(769deg) rotateY(692deg);
   }
+
   100% {
     transform: rotateX(810deg) rotateY(720deg);
   }
@@ -343,18 +403,23 @@ const moveSummary = computed(() => {
   0% {
     transform: rotateX(0deg) rotateY(0deg);
   }
+
   20% {
     transform: rotateX(255deg) rotateY(300deg);
   }
+
   40% {
     transform: rotateX(510deg) rotateY(600deg);
   }
+
   60% {
     transform: rotateX(651deg) rotateY(762deg);
   }
+
   80% {
     transform: rotateX(703deg) rotateY(851deg);
   }
+
   100% {
     transform: rotateX(720deg) rotateY(900deg);
   }
@@ -371,6 +436,7 @@ const moveSummary = computed(() => {
 .dice-roll-card__summary.snake {
   color: var(--osrs-red);
 }
+
 .dice-roll-card__summary.ladder {
   color: var(--osrs-green);
 }
@@ -380,6 +446,7 @@ const moveSummary = computed(() => {
     transform: scale(0.85);
     opacity: 0;
   }
+
   to {
     transform: scale(1);
     opacity: 1;
@@ -391,6 +458,7 @@ const moveSummary = computed(() => {
     opacity: 0;
     transform: translateY(4px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
