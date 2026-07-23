@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { gameStore } from '@/stores/gameStore'
-import { fetchLiveActivity, parseLiveActivity } from '@/data/liveActivity'
 import { formatRelativeTime } from '@/utils/formatRelativeTime'
 import { formatNumber } from '@/utils/formatNumber'
 import TeamToken from '@/components/board/TeamToken.vue'
+import FaqModal from '@/components/shared/FaqModal.vue'
 import RollLog from './RollLog.vue'
 import type { Team, TeamMember } from '@/types'
 
@@ -14,8 +14,9 @@ const props = defineProps<{
 
 type Tab = 'live' | 'log' | 'leaderboard' | 'stats' | 'roll'
 const activeTab = ref<Tab>('live')
+const faqOpen = ref(false)
 
-const liveActivity = parseLiveActivity(fetchLiveActivity())
+const liveActivity = computed(() => gameStore.state.liveActivity)
 
 const rankedTeams = computed(() =>
   [...gameStore.state.teams].sort((a, b) => b.position - a.position),
@@ -47,38 +48,15 @@ interface TeamStats {
   actions: number
 }
 
-function memberTotals(member: TeamMember): { gold: number; items: number } {
+function memberTotals(member: TeamMember): { gold: number; items: number; actions: number } {
   return member.accounts.reduce(
-    (acc, a) => ({ gold: acc.gold + a.gold, items: acc.items + a.items }),
-    { gold: 0, items: 0 },
+    (acc, a) => ({
+      gold: acc.gold + a.gold,
+      items: acc.items + a.items,
+      actions: acc.actions + a.actions,
+    }),
+    { gold: 0, items: 0, actions: 0 },
   )
-}
-
-const accountOwner = computed(() => {
-  const map = new Map<string, { teamId: string; displayName: string }>()
-  for (const team of gameStore.state.teams) {
-    for (const member of team.members) {
-      for (const account of member.accounts) {
-        map.set(account.name, { teamId: team.id, displayName: member.displayName })
-      }
-    }
-  }
-  return map
-})
-
-const actionsByMember = computed(() => {
-  const counts = new Map<string, number>()
-  for (const entry of liveActivity) {
-    const owner = accountOwner.value.get(entry.player)
-    if (!owner) continue
-    const key = memberKey(owner.teamId, owner.displayName)
-    counts.set(key, (counts.get(key) ?? 0) + 1)
-  }
-  return counts
-})
-
-function memberActions(teamId: string, displayName: string): number {
-  return actionsByMember.value.get(memberKey(teamId, displayName)) ?? 0
 }
 
 const teamStats = computed<TeamStats[]>(() => {
@@ -90,7 +68,7 @@ const teamStats = computed<TeamStats[]>(() => {
           return {
             gold: acc.gold + member.gold,
             items: acc.items + member.items,
-            actions: acc.actions + memberActions(team.id, m.displayName),
+            actions: acc.actions + member.actions,
           }
         },
         { gold: 0, items: 0, actions: 0 },
@@ -115,13 +93,19 @@ function sortedMembers(team: Team) {
   return [...team.members].sort((a, b) => memberTotals(b).gold - memberTotals(a).gold)
 }
 
-function memberKey(teamId: string, displayName: string): string {
-  return `${teamId}::${displayName}`
-}
-
 const selectedTeamId = ref(gameStore.state.teams[0]?.id ?? '')
 const selectedTeam = computed(() =>
   gameStore.state.teams.find((t) => t.id === selectedTeamId.value),
+)
+
+watch(
+  () => gameStore.state.teams,
+  (teams) => {
+    if (teams.length > 0 && !teams.some((t) => t.id === selectedTeamId.value)) {
+      selectedTeamId.value = teams[0]!.id
+    }
+  },
+  { immediate: true },
 )
 
 const now = ref(Date.now())
@@ -158,41 +142,23 @@ function rollDice() {
 <template>
   <div class="activity-tracker osrs-panel">
     <div class="tracker-tabs">
-      <button
-        class="tracker-tab"
-        :class="{ 'tracker-tab--active': activeTab === 'live' }"
-        @click="activeTab = 'live'"
-      >
+      <button class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'live' }" @click="activeTab = 'live'">
         <span class="tracker-tab__live-dot" />
         Live Updates
       </button>
-      <button
-        v-if="!props.hideRollLogTab"
-        class="tracker-tab"
-        :class="{ 'tracker-tab--active': activeTab === 'log' }"
-        @click="activeTab = 'log'"
-      >
+      <button v-if="!props.hideRollLogTab" class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'log' }"
+        @click="activeTab = 'log'">
         Roll Log
       </button>
-      <button
-        class="tracker-tab"
-        :class="{ 'tracker-tab--active': activeTab === 'leaderboard' }"
-        @click="activeTab = 'leaderboard'"
-      >
+      <button class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'leaderboard' }"
+        @click="activeTab = 'leaderboard'">
         Leaderboard
       </button>
-      <button
-        class="tracker-tab"
-        :class="{ 'tracker-tab--active': activeTab === 'stats' }"
-        @click="activeTab = 'stats'"
-      >
+      <button class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'stats' }"
+        @click="activeTab = 'stats'">
         Stats
       </button>
-      <button
-        class="tracker-tab"
-        :class="{ 'tracker-tab--active': activeTab === 'roll' }"
-        @click="activeTab = 'roll'"
-      >
+      <button class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'roll' }" @click="activeTab = 'roll'">
         Roll Dice
       </button>
     </div>
@@ -217,10 +183,8 @@ function rollDice() {
         </div>
 
         <div v-for="(team, index) in rankedTeams" :key="team.id" class="stats-team">
-          <div
-            class="leaderboard-table__row leaderboard-table__row--static"
-            :class="{ 'leaderboard-table__row--top': index < 3 }"
-          >
+          <div class="leaderboard-table__row leaderboard-table__row--static"
+            :class="{ 'leaderboard-table__row--top': index < 3 }">
             <span class="rank-label" :class="`rank-label--${index + 1}`">
               {{ rankLabel(index) }}
             </span>
@@ -270,10 +234,8 @@ function rollDice() {
           </div>
 
           <div v-for="(stat, index) in teamStats" :key="stat.team.id" class="stats-team">
-            <div
-              class="leaderboard-table__row stats-table__row leaderboard-table__row--static"
-              :class="{ 'leaderboard-table__row--top': index < 3 }"
-            >
+            <div class="leaderboard-table__row stats-table__row leaderboard-table__row--static"
+              :class="{ 'leaderboard-table__row--top': index < 3 }">
               <span class="rank-label" :class="`rank-label--${index + 1}`">
                 {{ rankLabel(index) }}
               </span>
@@ -289,11 +251,7 @@ function rollDice() {
             </div>
 
             <ul class="stats-members">
-              <li
-                v-for="member in sortedMembers(stat.team)"
-                :key="member.displayName"
-                class="stats-member"
-              >
+              <li v-for="member in sortedMembers(stat.team)" :key="member.displayName" class="stats-member">
                 <span class="stats-member__name">
                   {{ member.displayName }}
                   <span v-if="altAccountNames(member).length > 0" class="stats-member__alts">
@@ -307,7 +265,7 @@ function rollDice() {
                   formatNumber(memberTotals(member).items)
                 }}</span>
                 <span class="stats-member__stat">{{
-                  formatNumber(memberActions(stat.team.id, member.displayName))
+                  formatNumber(memberTotals(member).actions)
                 }}</span>
               </li>
             </ul>
@@ -318,14 +276,10 @@ function rollDice() {
       <div v-else class="roll-tab">
         <div class="roll-panel">
           <div class="team-tabs">
-            <button
-              v-for="team in gameStore.state.teams"
-              :key="team.id"
-              class="team-tab-chip"
+            <button v-for="team in gameStore.state.teams" :key="team.id" class="team-tab-chip"
               :class="{ 'team-tab-chip--active': team.id === selectedTeamId }"
               :style="team.id === selectedTeamId ? { '--chip-color': team.color } : undefined"
-              @click="selectTeam(team.id)"
-            >
+              @click="selectTeam(team.id)">
               {{ team.name }}
             </button>
           </div>
@@ -353,6 +307,12 @@ function rollDice() {
         </div>
       </div>
     </div>
+
+    <button v-if="activeTab === 'live'" class="live-faq-bar" @click="faqOpen = true">
+      Don't see your actions? <span class="live-faq-bar__link">Click here for setup help</span>
+    </button>
+
+    <FaqModal :open="faqOpen" @close="faqOpen = false" />
   </div>
 </template>
 
@@ -479,6 +439,30 @@ function rollDice() {
   color: var(--osrs-text-muted);
 }
 
+.live-faq-bar {
+  flex-shrink: 0;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--osrs-text-muted);
+  background: var(--osrs-panel-light);
+  border: none;
+  border-top: 1px solid var(--osrs-border);
+  cursor: pointer;
+  text-align: center;
+  transition: color var(--transition-fast);
+}
+
+.live-faq-bar:hover {
+  color: var(--osrs-text);
+}
+
+.live-faq-bar__link {
+  color: var(--osrs-gold);
+  font-weight: 600;
+}
+
 .leaderboard-table {
   display: flex;
   flex-direction: column;
@@ -542,14 +526,14 @@ function rollDice() {
 
 .leaderboard-member {
   padding: 0.3rem 0.5rem;
-  font-size: 1.1rem;
+  font-size: 0.8rem;
   color: var(--osrs-text-muted);
   background: var(--osrs-panel-hover);
   border-radius: var(--border-radius);
 }
 
 .leaderboard-member__alts {
-  font-size: 0.9rem;
+  font-size: 0.7rem;
   font-style: italic;
   color: var(--osrs-text-muted);
   opacity: 0.75;
@@ -808,6 +792,7 @@ function rollDice() {
 }
 
 @keyframes pulse {
+
   0%,
   100% {
     opacity: 1;

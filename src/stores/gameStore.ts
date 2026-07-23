@@ -1,8 +1,32 @@
 import { reactive, nextTick } from 'vue'
-import { fetchTeams, parseTeams } from '@/data/getTeams'
-import { fetchLogHistory, parseLogHistory } from '@/data/logHistory'
+import { parseTeams } from '@/data/getTeams'
+import {
+  buildBlankTiles,
+  parseBoardInitial,
+  parseTileEntry,
+  type RawBoardInitialTile,
+} from '@/data/boardInitial'
+import { parseBoardEventHistory, type RawBoardEventHistoryEntry } from '@/data/boardEventHistory'
+import {
+  parseActivityEntry,
+  parseActivityInitial,
+  type RawActivityEntry,
+} from '@/data/liveActivity'
+import type { RawScoreInitial, RawScorePlayerEntry } from '@/data/score'
+import type { RawChallengeProgressEntry } from '@/data/challengeProgress'
 import { postDiceRoll, DiceRollError } from '@/services/diceService'
-import type { Team, DiceRollEvent, TeamTaskProgress, RollHistoryEntry } from '@/types'
+import { fetchTeams } from '@/services/teamsService'
+import type {
+  Team,
+  Tile,
+  Snake,
+  Ladder,
+  DiceRollEvent,
+  TeamTaskProgress,
+  RollHistoryEntry,
+  ActivityEntry,
+  PlayerAccount,
+} from '@/types'
 
 const OVERLAY_MS = 3500
 const STEP_MS = 200
@@ -12,9 +36,13 @@ export const ROLL_COOLDOWN_MS = 10_000
 
 interface GameState {
   teams: Team[]
+  tiles: Tile[]
+  snakes: Snake[]
+  ladders: Ladder[]
   activeDiceRoll: DiceRollEvent | null
   connected: boolean
   rollHistory: RollHistoryEntry[]
+  liveActivity: ActivityEntry[]
   displayedPositions: Record<string, number>
   specialMoving: Record<string, boolean>
   historyIndex: number | null
@@ -23,23 +51,122 @@ interface GameState {
   rollError: string | null
 }
 
-const baseTeams = parseTeams(fetchTeams())
-
-const seededTeams = structuredClone(baseTeams)
-const seededHistory = parseLogHistory(fetchLogHistory(), seededTeams)
+let baseTeams: Team[] = []
 
 const state = reactive<GameState>({
-  teams: seededTeams,
+  teams: [],
+  tiles: buildBlankTiles(),
+  snakes: [],
+  ladders: [],
   activeDiceRoll: null,
   connected: false,
-  rollHistory: seededHistory,
-  displayedPositions: Object.fromEntries(seededTeams.map((t) => [t.id, t.position])),
+  rollHistory: [],
+  liveActivity: [],
+  displayedPositions: {},
   specialMoving: {},
   historyIndex: null,
   rollCooldownUntil: null,
   rolling: false,
   rollError: null,
 })
+
+async function loadTeams() {
+  try {
+    const raw = await fetchTeams()
+    const teams = parseTeams(raw)
+    baseTeams = teams
+    setTeams(structuredClone(teams))
+  } catch {}
+}
+
+function applyBoardInitial(raw: RawBoardInitialTile[]) {
+  const parsed = parseBoardInitial(raw)
+  state.tiles = parsed.tiles
+  state.snakes = parsed.snakes
+  state.ladders = parsed.ladders
+}
+
+function applyTileUpdateNow(raw: RawBoardInitialTile) {
+  const tile = parseTileEntry(raw)
+  const index = state.tiles.findIndex((t) => t.id === tile.id)
+  if (index !== -1) state.tiles[index] = tile
+  else state.tiles.push(tile)
+
+  if (raw.snakeTo !== undefined && !state.snakes.some((s) => s.from === raw.tileId)) {
+    state.snakes.push({ from: raw.tileId, to: raw.snakeTo })
+  }
+  if (raw.ladderTo !== undefined && !state.ladders.some((l) => l.from === raw.tileId)) {
+    state.ladders.push({ from: raw.tileId, to: raw.ladderTo })
+  }
+}
+
+const revealHeldTiles = new Set<number>()
+const pendingTileUpdates = new Map<number, RawBoardInitialTile>()
+
+function applyBoardUpdate(raw: RawBoardInitialTile) {
+  if (revealHeldTiles.has(raw.tileId)) {
+    pendingTileUpdates.set(raw.tileId, raw)
+    return
+  }
+  applyTileUpdateNow(raw)
+}
+
+function releaseTileReveal(tileId: number) {
+  revealHeldTiles.delete(tileId)
+  const pending = pendingTileUpdates.get(tileId)
+  if (pending) {
+    pendingTileUpdates.delete(tileId)
+    applyTileUpdateNow(pending)
+  }
+}
+
+function applyBoardEventInitial(raw: RawBoardEventHistoryEntry[]) {
+  const parsed = parseBoardEventHistory(raw, state.teams)
+  state.rollHistory = parsed.entries
+  for (const team of state.teams) {
+    const pos = parsed.positions[team.id]
+    if (pos !== undefined) {
+      team.position = pos
+      state.displayedPositions[team.id] = pos
+    }
+  }
+}
+
+function applyActivityInitial(raw: RawActivityEntry[]) {
+  state.liveActivity = parseActivityInitial(raw)
+}
+
+function applyActivityUpdate(raw: RawActivityEntry) {
+  state.liveActivity.unshift(parseActivityEntry(raw))
+}
+
+function findAccount(playerId: number): PlayerAccount | undefined {
+  for (const team of state.teams) {
+    for (const member of team.members) {
+      const account = member.accounts.find((a) => a.playerId === playerId)
+      if (account) return account
+    }
+  }
+  return undefined
+}
+
+function applyScoreInitial(raw: RawScoreInitial) {
+  for (const entry of raw.players) {
+    const account = findAccount(entry.playerId)
+    if (!account) continue
+    account.items = entry.dropCount
+    account.gold = entry.gpCount
+    account.actions = entry.actionCount
+  }
+}
+
+function applyScoreUpdate(entry: RawScorePlayerEntry) {
+  const account = findAccount(entry.playerId)
+  if (!account) return
+  account.items += entry.dropCount
+  account.gold += entry.gpCount
+  account.actions += entry.actionCount
+}
 
 function canRoll(): boolean {
   return (
@@ -54,19 +181,116 @@ function clearRollError() {
 const animVersion: Record<string, number> = {}
 
 function applyDiceRoll(event: DiceRollEvent) {
-  const team = state.teams.find((t) => t.id === event.teamId)
-  if (!team) return
-
-  if (event.toPosition !== undefined) {
-    team.position = event.snakeOrLadder?.finalPosition ?? event.toPosition
-  }
-
   if (state.historyIndex !== null) return
 
   state.activeDiceRoll = event
 
   setTimeout(() => {
     state.activeDiceRoll = null
+  }, OVERLAY_MS)
+}
+
+interface BoardEventUpdate {
+  teamId: string
+  previousTile: number
+  newTile: number
+  eventType: string
+  rolled: number
+  timestamp: string
+}
+
+function findSlideDestination(tileId: number): number | undefined {
+  return (
+    state.snakes.find((s) => s.from === tileId)?.to ??
+    state.ladders.find((l) => l.from === tileId)?.to
+  )
+}
+
+const pendingRollByTeam = new Map<string, BoardEventUpdate>()
+
+function applyBoardEventUpdate(update: BoardEventUpdate) {
+  const team = state.teams.find((t) => t.id === update.teamId)
+  if (!team) return
+
+  const type = update.eventType.toLowerCase()
+
+  if (type !== 'roll') {
+    const pendingRoll = pendingRollByTeam.get(team.id)
+    if (pendingRoll && pendingRoll.newTile === update.previousTile) {
+      state.rollHistory.unshift({
+        id: Date.now(),
+        teamId: team.id,
+        teamName: team.name,
+        teamColor: team.color,
+        roll: pendingRoll.rolled,
+        fromPosition: pendingRoll.previousTile,
+        toPosition: pendingRoll.newTile,
+        finalPosition: update.newTile,
+        snakeOrLadder: { type: type === 'ladder' ? 'ladder' : 'snake' },
+        timestamp: new Date(pendingRoll.timestamp),
+      })
+      pendingRollByTeam.delete(team.id)
+    }
+    team.position = update.newTile
+    if (state.historyIndex !== null) jumpToLive()
+    return
+  }
+
+  const slideTo = findSlideDestination(update.newTile)
+  const finalTile = slideTo ?? update.newTile
+
+  team.position = finalTile
+
+  if (slideTo !== undefined) {
+    pendingRollByTeam.set(team.id, update)
+  } else {
+    state.rollHistory.unshift({
+      id: Date.now(),
+      teamId: team.id,
+      teamName: team.name,
+      teamColor: team.color,
+      roll: update.rolled,
+      fromPosition: update.previousTile,
+      toPosition: update.newTile,
+      finalPosition: update.newTile,
+      timestamp: new Date(update.timestamp),
+    })
+  }
+
+  if (state.historyIndex !== null) jumpToLive()
+
+  applyDiceRoll({ teamId: team.id, roll: update.rolled })
+
+  animVersion[team.id] = (animVersion[team.id] ?? 0) + 1
+  const myVersion = animVersion[team.id]!
+
+  revealHeldTiles.add(update.newTile)
+  if (slideTo !== undefined) revealHeldTiles.add(finalTile)
+
+  state.displayedPositions[team.id] = update.previousTile
+  setTimeout(() => {
+    if (animVersion[team.id] !== myVersion) {
+      releaseTileReveal(update.newTile)
+      if (slideTo !== undefined) releaseTileReveal(finalTile)
+      return
+    }
+    crawlToken(team.id, myVersion, update.previousTile, update.newTile, () => {
+      releaseTileReveal(update.newTile)
+      if (slideTo === undefined) return
+
+      state.specialMoving[team.id] = true
+      nextTick().then(() => {
+        if (animVersion[team.id] !== myVersion) {
+          releaseTileReveal(finalTile)
+          return
+        }
+        state.displayedPositions[team.id] = finalTile
+        setTimeout(() => {
+          if (animVersion[team.id] === myVersion) delete state.specialMoving[team.id]
+          releaseTileReveal(finalTile)
+        }, SPECIAL_TRANSITION_MS + 100)
+      })
+    })
   }, OVERLAY_MS)
 }
 
@@ -220,17 +444,14 @@ async function rollForTeam(teamId: string) {
   state.rolling = true
   state.rollError = null
 
-  let roll: number
   try {
-    roll = await postDiceRoll(teamId)
+    await postDiceRoll(teamId)
   } catch (err) {
     state.rollError = err instanceof DiceRollError ? err.message : 'Failed to roll dice.'
     return
   } finally {
     state.rolling = false
   }
-
-  applyDiceRoll({ teamId: team.id, roll })
 
   state.rollCooldownUntil = Date.now() + ROLL_COOLDOWN_MS
 }
@@ -250,21 +471,44 @@ function resetAll() {
   state.rollCooldownUntil = null
 }
 
-function updateTaskProgress(teamId: string, tileId: number, dropsCollected: number) {
+function updateTaskProgress(
+  teamId: string,
+  tileId: number,
+  completionPercentage: number,
+  isCompleted: boolean,
+) {
   const team = state.teams.find((t) => t.id === teamId)
   if (!team) return
 
   const existing = team.taskProgress.find((p) => p.tileId === tileId)
   if (existing) {
-    existing.dropsCollected = dropsCollected
+    existing.completionPercentage = completionPercentage
+    existing.isCompleted = isCompleted
   } else {
-    team.taskProgress.push({ tileId, dropsCollected })
+    team.taskProgress.push({ tileId, completionPercentage, isCompleted })
   }
 }
 
 function getTeamProgressOnTile(teamId: string, tileId: number): TeamTaskProgress | undefined {
   const team = state.teams.find((t) => t.id === teamId)
   return team?.taskProgress.find((p) => p.tileId === tileId)
+}
+
+function applyChallengeProgressEntry(entry: RawChallengeProgressEntry) {
+  updateTaskProgress(
+    String(entry.teamId),
+    entry.tileId,
+    entry.completionPercentage,
+    entry.isTileCompleted,
+  )
+}
+
+function applyChallengeProgressInitial(raw: RawChallengeProgressEntry[]) {
+  for (const entry of raw) applyChallengeProgressEntry(entry)
+}
+
+function applyChallengeProgressUpdate(entry: RawChallengeProgressEntry) {
+  applyChallengeProgressEntry(entry)
 }
 
 function setConnected(value: boolean) {
@@ -282,7 +526,17 @@ function setTeams(teams: Team[]) {
 
 export const gameStore = {
   state,
-  applyDiceRoll,
+  loadTeams,
+  applyBoardInitial,
+  applyBoardUpdate,
+  applyBoardEventInitial,
+  applyBoardEventUpdate,
+  applyActivityInitial,
+  applyActivityUpdate,
+  applyScoreInitial,
+  applyScoreUpdate,
+  applyChallengeProgressInitial,
+  applyChallengeProgressUpdate,
   rollForTeam,
   canRoll,
   clearRollError,

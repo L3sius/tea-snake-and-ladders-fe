@@ -12,13 +12,16 @@ export interface Tile {
 
 export interface TeamTaskProgress {
   tileId: number
-  dropsCollected: number
+  completionPercentage: number
+  isCompleted: boolean
 }
 
 export interface PlayerAccount {
+  playerId: number
   name: string
   gold: number
   items: number
+  actions: number
 }
 
 export interface TeamMember {
@@ -49,18 +52,12 @@ export interface Ladder {
 export interface DiceRollEvent {
   teamId: string
   roll: number
-  fromPosition?: number
-  toPosition?: number
-  snakeOrLadder?: { type: 'snake' | 'ladder'; finalPosition: number }
 }
 
 export interface BoardConfig {
   columns: number
   rows: number
   totalTiles: number
-  tiers: { tier: Tier; from: number; to: number }[]
-  snakes: Snake[]
-  ladders: Ladder[]
 }
 
 export interface RollHistoryEntry {

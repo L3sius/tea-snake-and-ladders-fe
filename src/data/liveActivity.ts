@@ -1,30 +1,56 @@
 import type { ActivityEntry } from '@/types'
-import mockLiveActivity from './mockLiveActivity.json'
 
-export interface RawLiveActivityEntry {
-  name: string
-  event: string
+interface RawActivityEntryBase {
+  playerName: string
   timestamp: string
 }
 
-export type RawLiveActivity = Record<string, RawLiveActivityEntry>
-
-export function fetchLiveActivity(): RawLiveActivity {
-  return mockLiveActivity as RawLiveActivity
+export interface RawLootEntry extends RawActivityEntryBase {
+  eventTypeFromDink: 'LOOT'
+  source: string
 }
 
-export function parseLiveActivity(raw: RawLiveActivity): ActivityEntry[] {
-  const sequenceKeys = Object.keys(raw).sort((a, b) => Number(a) - Number(b))
+export interface RawClueEntry extends RawActivityEntryBase {
+  eventTypeFromDink: 'CLUE'
+  source: string
+}
 
-  return sequenceKeys
-    .map((seqKey) => {
-      const entry = raw[seqKey]!
-      return {
-        id: Number(seqKey),
-        player: entry.name,
-        action: entry.event,
-        timestamp: new Date(entry.timestamp),
-      }
-    })
-    .reverse()
+export interface RawKillCountEntry extends RawActivityEntryBase {
+  eventTypeFromDink: 'KILL_COUNT'
+  source: string
+}
+
+export interface RawPetEntry extends RawActivityEntryBase {
+  eventTypeFromDink: 'PET'
+  petName: string
+}
+
+export type RawActivityEntry = RawLootEntry | RawClueEntry | RawKillCountEntry | RawPetEntry
+
+function formatAction(raw: RawActivityEntry): string {
+  switch (raw.eventTypeFromDink) {
+    case 'LOOT':
+      return `got loot from ${raw.source}`
+    case 'CLUE':
+      return `completed a ${raw.source} clue`
+    case 'KILL_COUNT':
+      return `conquered ${raw.source}`
+    case 'PET':
+      return `received a pet: ${raw.petName}`
+  }
+}
+
+export function parseActivityEntry(raw: RawActivityEntry): ActivityEntry {
+  return {
+    id: Date.parse(raw.timestamp),
+    player: raw.playerName,
+    action: formatAction(raw),
+    timestamp: new Date(raw.timestamp),
+  }
+}
+
+export function parseActivityInitial(raw: RawActivityEntry[]): ActivityEntry[] {
+  return [...raw]
+    .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))
+    .map(parseActivityEntry)
 }

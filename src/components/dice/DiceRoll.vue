@@ -2,6 +2,7 @@
 import { computed, onMounted } from 'vue'
 import { gameStore } from '@/stores/gameStore'
 import { SNAKE_COLOR_VARIANTS } from '@/utils/snakeColors'
+import { pickDiceSound } from '@/utils/diceSounds'
 import type { DiceRollEvent } from '@/types'
 
 const props = defineProps<{
@@ -13,7 +14,7 @@ const team = computed(() => gameStore.state.teams.find((t) => t.id === props.eve
 const diceDotImage = SNAKE_COLOR_VARIANTS[0]!.headHref
 
 onMounted(() => {
-  const audio = new Audio('/sounds/dice_roll.mp3')
+  const audio = new Audio(pickDiceSound())
   audio.volume = 0.6
   audio.play().catch(() => {})
 })
@@ -60,19 +61,6 @@ const faces = [
   { cls: 'top', num: 2 },
   { cls: 'bottom', num: 5 },
 ]
-
-const moveSummary = computed(() => {
-  if (props.event.snakeOrLadder) {
-    const { type, finalPosition } = props.event.snakeOrLadder
-    return type === 'snake'
-      ? `Snake! Slid down to ${finalPosition}`
-      : `Ladder! Climbed up to ${finalPosition}`
-  }
-  if (props.event.toPosition !== undefined) {
-    return `Moved to tile ${props.event.toPosition}`
-  }
-  return `Rolled a ${props.event.roll}`
-})
 </script>
 
 <template>
@@ -110,9 +98,7 @@ const moveSummary = computed(() => {
         </div>
       </div>
 
-      <p class="dice-roll-card__summary" :class="event.snakeOrLadder?.type">
-        {{ moveSummary }}
-      </p>
+      <p class="dice-roll-card__summary">Rolled a {{ event.roll }}</p>
     </div>
   </div>
 </template>
@@ -399,14 +385,6 @@ const moveSummary = computed(() => {
   color: var(--osrs-text);
   text-align: center;
   animation: summary-reveal 0.4s ease-out 2.8s both;
-}
-
-.dice-roll-card__summary.snake {
-  color: var(--osrs-red);
-}
-
-.dice-roll-card__summary.ladder {
-  color: var(--osrs-green);
 }
 
 @keyframes card-pop {

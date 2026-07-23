@@ -12,8 +12,10 @@ const emit = defineEmits<{
 }>()
 
 const tierClass = computed(() => `tier-${props.tile.tier}`)
+const isAvailable = computed(() => !!(props.tile.name || props.tile.description))
 
 function handleClick() {
+  if (!isAvailable.value) return
   emit('click', props.tile)
 }
 </script>
@@ -21,10 +23,13 @@ function handleClick() {
 <template>
   <div
     class="board-tile"
-    :class="[tierClass, { 'board-tile--occupied': teamsOnTile.length > 0 }]"
-    role="button"
-    tabindex="0"
-    :aria-label="`Tile ${tile.id}: ${tile.name}`"
+    :class="[
+      tierClass,
+      { 'board-tile--occupied': teamsOnTile.length > 0, 'board-tile--unavailable': !isAvailable },
+    ]"
+    :role="isAvailable ? 'button' : undefined"
+    :tabindex="isAvailable ? 0 : -1"
+    :aria-label="isAvailable ? `Tile ${tile.id}: ${tile.name}` : `Tile ${tile.id}`"
     @click="handleClick"
     @keydown.enter="handleClick"
     @keydown.space.prevent="handleClick"
@@ -67,6 +72,16 @@ function handleClick() {
 
 .board-tile--occupied {
   border-color: var(--osrs-border-gold);
+}
+
+.board-tile--unavailable {
+  cursor: default;
+}
+
+.board-tile--unavailable:hover,
+.board-tile--unavailable:focus-visible {
+  background: var(--tile-bg, var(--osrs-panel));
+  border-color: var(--tile-border, var(--osrs-border));
 }
 
 .board-tile__number {

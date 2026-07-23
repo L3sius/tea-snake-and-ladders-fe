@@ -4,7 +4,6 @@ import BoardTile from './BoardTile.vue'
 import TeamToken from './TeamToken.vue'
 import TileModal from './TileModal.vue'
 import DiceRoll from '@/components/dice/DiceRoll.vue'
-import { tiles } from '@/data/tiles'
 import {
   boardConfig,
   getTilePosition,
@@ -20,8 +19,11 @@ import type { Tile, Team } from '@/types'
 const selectedTile = ref<Tile | null>(null)
 const activeDiceRoll = computed(() => gameStore.state.activeDiceRoll)
 const teams = computed(() => gameStore.state.teams)
+const tiles = computed(() => gameStore.state.tiles)
 
-const HARDCODED_TILE_COMPLETED = true
+function isTeamTileCompleted(team: Team): boolean {
+  return gameStore.getTeamProgressOnTile(team.id, team.position)?.isCompleted ?? false
+}
 
 const teamsByTile = computed(() => {
   const map = new Map<number, Team[]>()
@@ -102,7 +104,7 @@ function toCornerPoint(tileId: number, seed: number) {
 const PATTERN_IMAGE_GRAIN_OFFSET_DEG = 0
 
 const snakeBodies = computed<SnakeBody[]>(() =>
-  boardConfig.snakes.map((snake) => {
+  gameStore.state.snakes.map((snake) => {
     const head = toPoint(snake.from)
     const tail = toCornerPoint(snake.to, snake.to)
     const ribbon = buildSnakeRibbon(head, tail, snake.from)
@@ -150,7 +152,7 @@ function toFacingCornerPoint(tileId: number, towardX: number, towardY: number) {
 }
 
 const ladderBodies = computed<LadderBody[]>(() =>
-  boardConfig.ladders.map((ladder) => {
+  gameStore.state.ladders.map((ladder) => {
     const fromCenter = toPoint(ladder.from)
     const toCenter = toPoint(ladder.to)
     const dx = toCenter.x - fromCenter.x
@@ -215,7 +217,7 @@ function ladderFeetTransform(ladder: LadderBody): string {
           <TeamToken
             :team="team"
             size="sm"
-            :completed="HARDCODED_TILE_COMPLETED"
+            :completed="isTeamTileCompleted(team)"
             :style="{ width: '100%', height: '100%' }"
           />
         </div>

@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 import type { Tile, Team } from '@/types'
 import { gameStore } from '@/stores/gameStore'
-import { boardConfig } from '@/data/boardConfig'
 import { getSnakeColor } from '@/utils/snakeColors'
 import TeamToken from './TeamToken.vue'
 
@@ -24,7 +23,7 @@ const tierLabel: Record<1 | 2 | 3, string> = {
 
 const snakeColor = computed(() => {
   if (!tile.value) return null
-  const snake = boardConfig.snakes.find((s) => s.from === tile.value!.id)
+  const snake = gameStore.state.snakes.find((s) => s.from === tile.value!.id)
   return snake ? getSnakeColor(snake.from) : null
 })
 
@@ -37,12 +36,12 @@ const teamsOnTile = computed<Team[]>(() => {
   return gameStore.state.teams.filter((t) => t.position === tile.value!.id)
 })
 
-function getProgress(team: Team): { collected: number; required: number } {
-  if (!tile.value) return { collected: 0, required: 1 }
+function getProgress(team: Team): { percentage: number; isCompleted: boolean } {
+  if (!tile.value) return { percentage: 0, isCompleted: false }
   const progress = gameStore.getTeamProgressOnTile(team.id, tile.value.id)
   return {
-    collected: progress?.dropsCollected ?? 0,
-    required: tile.value.requiredDrops ?? 1,
+    percentage: progress?.completionPercentage ?? 0,
+    isCompleted: progress?.isCompleted ?? false,
   }
 }
 
@@ -98,13 +97,17 @@ function handleBackdropClick(e: MouseEvent) {
                       <div
                         class="modal__progress-bar"
                         :style="{
-                          width: `${(getProgress(team).collected / getProgress(team).required) * 100}%`,
-                          borderColor: team.color,
+                          width: `${getProgress(team).percentage}%`,
+                          color: team.color,
                         }"
                       />
                     </div>
                     <span class="modal__progress-label">
-                      {{ getProgress(team).collected }} / {{ getProgress(team).required }}
+                      {{
+                        getProgress(team).isCompleted
+                          ? 'Completed'
+                          : `${getProgress(team).percentage}%`
+                      }}
                     </span>
                   </div>
                 </div>
