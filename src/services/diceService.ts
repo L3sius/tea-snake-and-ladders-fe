@@ -1,9 +1,9 @@
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
 
 export class DiceRollError extends Error {}
 
 export async function postDiceRoll(teamId: string): Promise<number> {
-  const res = await fetch(`${API_URL}/dice`, {
+  const res = await fetch(`${API_URL}/dice/roll`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ teamId }),

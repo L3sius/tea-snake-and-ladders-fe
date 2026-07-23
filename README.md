@@ -35,10 +35,10 @@ npm run format    # prettier
 Create a `.env.local` file in the project root:
 
 ```env
-VITE_SSE_URL=http://localhost:3000/events
+VITE_SSE_URL=http://localhost:8080/api/events
 ```
 
-The default value is `http://localhost:3000/events`. The frontend connects automatically on load and reconnects on disconnect.
+The default value is `http://localhost:8080/api/events`. The frontend connects automatically on load and reconnects on disconnect.
 
 ---
 

@@ -49,8 +49,8 @@ export interface Ladder {
 export interface DiceRollEvent {
   teamId: string
   roll: number
-  fromPosition: number
-  toPosition: number
+  fromPosition?: number
+  toPosition?: number
   snakeOrLadder?: { type: 'snake' | 'ladder'; finalPosition: number }
 }
 

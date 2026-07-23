@@ -1,6 +1,5 @@
 import { reactive, nextTick } from 'vue'
 import { fetchTeams, parseTeams } from '@/data/getTeams'
-import { boardConfig } from '@/data/boardConfig'
 import { fetchLogHistory, parseLogHistory } from '@/data/logHistory'
 import { postDiceRoll, DiceRollError } from '@/services/diceService'
 import type { Team, DiceRollEvent, TeamTaskProgress, RollHistoryEntry } from '@/types'
@@ -58,8 +57,9 @@ function applyDiceRoll(event: DiceRollEvent) {
   const team = state.teams.find((t) => t.id === event.teamId)
   if (!team) return
 
-  const finalPosition = event.snakeOrLadder?.finalPosition ?? event.toPosition
-  team.position = finalPosition
+  if (event.toPosition !== undefined) {
+    team.position = event.snakeOrLadder?.finalPosition ?? event.toPosition
+  }
 
   if (state.historyIndex !== null) return
 
@@ -211,43 +211,6 @@ function jumpToLive() {
   }
 }
 
-function animateToken(teamId: string, from: number, toRaw: number, finalPos: number) {
-  animVersion[teamId] = (animVersion[teamId] ?? 0) + 1
-  const myVersion = animVersion[teamId]
-
-  state.displayedPositions[teamId] = from
-
-  let current = from
-
-  function step() {
-    if (animVersion[teamId] !== myVersion) return
-
-    current++
-    state.displayedPositions[teamId] = current
-
-    if (current < toRaw) {
-      setTimeout(step, STEP_MS)
-    } else if (finalPos !== toRaw) {
-      setTimeout(async () => {
-        if (animVersion[teamId] !== myVersion) return
-
-        state.specialMoving[teamId] = true
-        await nextTick()
-
-        if (animVersion[teamId] !== myVersion) return
-        state.displayedPositions[teamId] = finalPos
-
-        setTimeout(() => {
-          if (animVersion[teamId] !== myVersion) return
-          delete state.specialMoving[teamId]
-        }, SPECIAL_TRANSITION_MS + 100)
-      }, LAND_PAUSE_MS)
-    }
-  }
-
-  setTimeout(step, OVERLAY_MS)
-}
-
 async function rollForTeam(teamId: string) {
   if (!canRoll()) return
 
@@ -267,47 +230,7 @@ async function rollForTeam(teamId: string) {
     state.rolling = false
   }
 
-  const fromPosition = team.position
-  const rawToPosition = Math.min(fromPosition + roll, boardConfig.totalTiles)
-
-  const snake = boardConfig.snakes.find((s) => s.from === rawToPosition)
-  const ladder = boardConfig.ladders.find((l) => l.from === rawToPosition)
-
-  const event: DiceRollEvent = {
-    teamId: team.id,
-    roll,
-    fromPosition,
-    toPosition: rawToPosition,
-    snakeOrLadder: snake
-      ? { type: 'snake', finalPosition: snake.to }
-      : ladder
-        ? { type: 'ladder', finalPosition: ladder.to }
-        : undefined,
-  }
-
-  applyDiceRoll(event)
-
-  if (state.historyIndex === null) {
-    animateToken(
-      team.id,
-      fromPosition,
-      rawToPosition,
-      event.snakeOrLadder?.finalPosition ?? rawToPosition,
-    )
-  }
-
-  state.rollHistory.unshift({
-    id: Date.now(),
-    teamId: team.id,
-    teamName: team.name,
-    teamColor: team.color,
-    roll,
-    fromPosition,
-    toPosition: rawToPosition,
-    finalPosition: event.snakeOrLadder?.finalPosition ?? rawToPosition,
-    snakeOrLadder: event.snakeOrLadder ? { type: event.snakeOrLadder.type } : undefined,
-    timestamp: new Date(),
-  })
+  applyDiceRoll({ teamId: team.id, roll })
 
   state.rollCooldownUntil = Date.now() + ROLL_COOLDOWN_MS
 }

@@ -68,7 +68,10 @@ const moveSummary = computed(() => {
       ? `Snake! Slid down to ${finalPosition}`
       : `Ladder! Climbed up to ${finalPosition}`
   }
-  return `Moved to tile ${props.event.toPosition}`
+  if (props.event.toPosition !== undefined) {
+    return `Moved to tile ${props.event.toPosition}`
+  }
+  return `Rolled a ${props.event.roll}`
 })
 </script>
 

@@ -1,7 +1,7 @@
 import { gameStore } from '@/stores/gameStore'
 import type { DiceRollEvent, Team } from '@/types'
 
-const SSE_URL = import.meta.env.VITE_SSE_URL ?? 'http://localhost:3000/events'
+const SSE_URL = import.meta.env.VITE_SSE_URL ?? 'http://localhost:8080/api/events'
 
 let eventSource: EventSource | null = null
 
