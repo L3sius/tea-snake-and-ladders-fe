@@ -5,7 +5,8 @@ import type { RawActivityEntry } from '@/data/liveActivity'
 import type { RawScoreInitial, RawScorePlayerEntry } from '@/data/score'
 import type { RawChallengeProgressEntry } from '@/data/challengeProgress'
 
-const SSE_URL = import.meta.env.VITE_SSE_URL ?? 'http://localhost:8080/events'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
+const SSE_URL = `${API_BASE_URL.replace(/\/$/, '')}/events`;
 
 interface RawBoardEventUpdate {
   teamId: number
@@ -31,21 +32,21 @@ function connect() {
     try {
       const raw: RawBoardInitialTile[] = JSON.parse(e.data)
       gameStore.applyBoardInitial(raw)
-    } catch {}
+    } catch { }
   })
 
   eventSource.addEventListener('board-event-initial', (e: MessageEvent) => {
     try {
       const raw: RawBoardEventHistoryEntry[] = JSON.parse(e.data)
       gameStore.applyBoardEventInitial(raw)
-    } catch {}
+    } catch { }
   })
 
   eventSource.addEventListener('board-update', (e: MessageEvent) => {
     try {
       const raw: RawBoardInitialTile = JSON.parse(e.data)
       gameStore.applyBoardUpdate(raw)
-    } catch {}
+    } catch { }
   })
 
   eventSource.addEventListener('board-event-update', (e: MessageEvent) => {
@@ -59,49 +60,49 @@ function connect() {
         rolled: update.rolled,
         timestamp: update.timestamp,
       })
-    } catch {}
+    } catch { }
   })
 
   eventSource.addEventListener('action-initial', (e: MessageEvent) => {
     try {
       const raw: RawActivityEntry[] = JSON.parse(e.data)
       gameStore.applyActivityInitial(raw)
-    } catch {}
+    } catch { }
   })
 
   eventSource.addEventListener('action-feed-update', (e: MessageEvent) => {
     try {
       const raw: RawActivityEntry = JSON.parse(e.data)
       gameStore.applyActivityUpdate(raw)
-    } catch {}
+    } catch { }
   })
 
   eventSource.addEventListener('score-initial', (e: MessageEvent) => {
     try {
       const raw: RawScoreInitial = JSON.parse(e.data)
       gameStore.applyScoreInitial(raw)
-    } catch {}
+    } catch { }
   })
 
   eventSource.addEventListener('score-update', (e: MessageEvent) => {
     try {
       const raw: RawScorePlayerEntry = JSON.parse(e.data)
       gameStore.applyScoreUpdate(raw)
-    } catch {}
+    } catch { }
   })
 
   eventSource.addEventListener('challenge-progress-initial', (e: MessageEvent) => {
     try {
       const raw: RawChallengeProgressEntry[] = JSON.parse(e.data)
       gameStore.applyChallengeProgressInitial(raw)
-    } catch {}
+    } catch { }
   })
 
   eventSource.addEventListener('challenge-progress-update', (e: MessageEvent) => {
     try {
       const raw: RawChallengeProgressEntry = JSON.parse(e.data)
       gameStore.applyChallengeProgressUpdate(raw)
-    } catch {}
+    } catch { }
   })
 
   eventSource.addEventListener('error', () => {
