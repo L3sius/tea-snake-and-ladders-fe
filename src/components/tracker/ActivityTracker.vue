@@ -183,6 +183,14 @@ function rollDice() {
       </button>
     </div>
 
+    <select v-model="activeTab" class="tracker-tabs-select" aria-label="Select tab">
+      <option value="live">Live Updates</option>
+      <option v-if="!props.hideRollLogTab" value="log">Roll Log</option>
+      <option value="leaderboard">Leaderboard</option>
+      <option value="stats">Stats</option>
+      <option value="roll">Roll Dice</option>
+    </select>
+
     <div class="tracker-body">
       <ul v-if="activeTab === 'live'" class="live-list">
         <li
@@ -359,6 +367,7 @@ function rollDice() {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  container-type: inline-size;
 }
 
 .tracker-tabs {
@@ -396,18 +405,26 @@ function rollDice() {
   background: var(--osrs-panel-hover);
 }
 
-@media (max-width: 768px) {
-  .tracker-tabs {
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
+.tracker-tabs-select {
+  display: none;
+  margin: 0.5rem 0.5rem 0;
+  padding: 0.5rem 0.6rem;
+  font-family: var(--font-display);
+  font-size: 0.55rem;
+  color: var(--osrs-gold);
+  background: var(--osrs-panel-light);
+  border: 1px solid var(--osrs-border-gold);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+}
 
-  .tracker-tabs::-webkit-scrollbar {
+@container (max-width: 480px) {
+  .tracker-tabs {
     display: none;
   }
 
-  .tracker-tab {
-    flex: 0 0 auto;
+  .tracker-tabs-select {
+    display: block;
   }
 }
 
@@ -474,6 +491,17 @@ function rollDice() {
 
 .live-entry__action {
   color: var(--osrs-text-muted);
+}
+
+@container (max-width: 380px) {
+  .live-entry {
+    flex-wrap: wrap;
+  }
+
+  .live-entry__action {
+    flex-basis: 100%;
+    padding-left: 2.9rem;
+  }
 }
 
 .live-entry--death .live-entry__player,

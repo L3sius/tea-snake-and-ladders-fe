@@ -1,11 +1,30 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import GameBoard from '@/components/board/GameBoard.vue'
 import ActivityTracker from '@/components/tracker/ActivityTracker.vue'
 import RollLog from '@/components/tracker/RollLog.vue'
 
 const trackerCollapsed = ref(false)
 const rollLogCollapsed = ref(false)
+
+const NARROW_QUERY = '(max-width: 1330px)'
+let narrowQuery: MediaQueryList | null = null
+
+function collapseIfNarrow(query: MediaQueryList | MediaQueryListEvent) {
+  if (!query.matches) return
+  trackerCollapsed.value = true
+  rollLogCollapsed.value = true
+}
+
+onMounted(() => {
+  narrowQuery = window.matchMedia(NARROW_QUERY)
+  collapseIfNarrow(narrowQuery)
+  narrowQuery.addEventListener('change', collapseIfNarrow)
+})
+
+onUnmounted(() => {
+  narrowQuery?.removeEventListener('change', collapseIfNarrow)
+})
 </script>
 
 <template>
@@ -52,7 +71,8 @@ const rollLogCollapsed = ref(false)
   padding: 1rem;
   align-items: flex-start;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .board-view__side {
@@ -66,27 +86,32 @@ const rollLogCollapsed = ref(false)
 
 .board-view__side--left {
   flex: 0 0 25%;
+  min-width: 440px;
 }
 
 .board-view__side--right {
   flex: 0 0 20%;
+  min-width: 380px;
 }
 
 .board-view__side--left.board-view__side--collapsed,
 .board-view__side--right.board-view__side--collapsed {
   flex: 0 0 auto;
+  min-width: 0;
 }
 
 .board-view__tracker,
 .board-view__rolllog {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
   height: 100%;
 }
 
 .board-view__collapse-btn {
-  flex-shrink: 0;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
   width: 1.5rem;
+  height: 2.5rem;
   background: var(--osrs-panel-light);
   border: 1px solid var(--osrs-border);
   color: var(--osrs-text-muted);
@@ -98,6 +123,14 @@ const rollLogCollapsed = ref(false)
     border-color var(--transition-fast);
 }
 
+.board-view__side--left .board-view__collapse-btn {
+  right: -1.1rem;
+}
+
+.board-view__side--right .board-view__collapse-btn {
+  left: -1.1rem;
+}
+
 .board-view__collapse-btn:hover {
   color: var(--osrs-gold);
   border-color: var(--osrs-border-gold);
@@ -105,7 +138,7 @@ const rollLogCollapsed = ref(false)
 
 .board-view__main {
   flex: 1;
-  min-width: 0;
+  min-width: 400px;
   display: flex;
   justify-content: center;
 }
@@ -123,6 +156,7 @@ const rollLogCollapsed = ref(false)
 
   .board-view__main {
     width: 100%;
+    min-width: 0;
   }
 }
 </style>
