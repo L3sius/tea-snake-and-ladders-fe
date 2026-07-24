@@ -78,4 +78,5 @@ export interface ActivityEntry {
   player: string
   action: string
   timestamp: Date
+  isDeath?: boolean
 }

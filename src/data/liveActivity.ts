@@ -25,7 +25,17 @@ export interface RawPetEntry extends RawActivityEntryBase {
   petName: string
 }
 
-export type RawActivityEntry = RawLootEntry | RawClueEntry | RawKillCountEntry | RawPetEntry
+export interface RawDeathEntry extends RawActivityEntryBase {
+  eventTypeFromDink: 'DEATH'
+  source: string
+}
+
+export type RawActivityEntry =
+  | RawLootEntry
+  | RawClueEntry
+  | RawKillCountEntry
+  | RawPetEntry
+  | RawDeathEntry
 
 function formatAction(raw: RawActivityEntry): string {
   switch (raw.eventTypeFromDink) {
@@ -37,6 +47,8 @@ function formatAction(raw: RawActivityEntry): string {
       return `conquered ${raw.source}`
     case 'PET':
       return `received a pet: ${raw.petName}`
+    case 'DEATH':
+      return `died to ${raw.source}`
   }
 }
 
@@ -46,6 +58,7 @@ export function parseActivityEntry(raw: RawActivityEntry): ActivityEntry {
     player: raw.playerName,
     action: formatAction(raw),
     timestamp: new Date(raw.timestamp),
+    isDeath: raw.eventTypeFromDink === 'DEATH',
   }
 }
 

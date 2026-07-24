@@ -185,7 +185,12 @@ function rollDice() {
 
     <div class="tracker-body">
       <ul v-if="activeTab === 'live'" class="live-list">
-        <li v-for="entry in liveActivity" :key="entry.id" class="live-entry">
+        <li
+          v-for="entry in liveActivity"
+          :key="entry.id"
+          class="live-entry"
+          :class="{ 'live-entry--death': entry.isDeath }"
+        >
           <span class="live-entry__age">{{ formatRelativeTime(entry.timestamp) }}</span>
           <span class="live-entry__player">{{ entry.player }}</span>
           <span class="live-entry__action"> {{ entry.action }}</span>
@@ -469,6 +474,12 @@ function rollDice() {
 
 .live-entry__action {
   color: var(--osrs-text-muted);
+}
+
+.live-entry--death .live-entry__player,
+.live-entry--death .live-entry__action {
+  color: #ff3232;
+  font-weight: 600;
 }
 
 .live-faq-bar {
