@@ -147,33 +147,46 @@ function formatTime(date: Date): string {
                   <span class="roll-entry__team" :style="{ color: entry.teamColor }">{{
                     entry.teamName
                   }}</span>
-                  <span class="roll-entry__verb"> rolled a </span>
-                  <strong class="roll-entry__roll" :style="{ color: entry.teamColor }">{{
-                    entry.roll
-                  }}</strong>
+                  <template v-if="entry.roll !== null">
+                    <span class="roll-entry__verb"> rolled a </span>
+                    <strong class="roll-entry__roll" :style="{ color: entry.teamColor }">{{
+                      entry.roll
+                    }}</strong>
+                  </template>
+                  <span v-else class="roll-entry__verb"> climbed a ladder</span>
                   <span class="roll-entry__time">
                     {{ formatTime(entry.timestamp) }} ·
                     {{ formatRelativeTime(entry.timestamp) }} ago
                   </span>
                 </div>
                 <div class="roll-entry__line2">
-                  <span>Moved from </span>
-                  <strong>{{ entry.fromPosition }}</strong>
-                  <span> to </span>
-                  <strong>{{ entry.toPosition }}</strong>
-                  <template v-if="entry.snakeOrLadder">
-                    <span
-                      :class="
-                        entry.snakeOrLadder.type === 'ladder'
-                          ? 'roll-entry__climb'
-                          : 'roll-entry__fall'
-                      "
-                    >
-                      {{
-                        entry.snakeOrLadder.type === 'ladder' ? ' and climbed to ' : ' and fell to '
-                      }}
-                      <strong>{{ entry.finalPosition }}</strong>
-                    </span>
+                  <template v-if="entry.roll === null">
+                    <span class="roll-entry__climb">Climbed from </span>
+                    <strong>{{ entry.fromPosition }}</strong>
+                    <span class="roll-entry__climb"> to </span>
+                    <strong>{{ entry.finalPosition }}</strong>
+                  </template>
+                  <template v-else>
+                    <span>Moved from </span>
+                    <strong>{{ entry.fromPosition }}</strong>
+                    <span> to </span>
+                    <strong>{{ entry.toPosition }}</strong>
+                    <template v-if="entry.snakeOrLadder">
+                      <span
+                        :class="
+                          entry.snakeOrLadder.type === 'ladder'
+                            ? 'roll-entry__climb'
+                            : 'roll-entry__fall'
+                        "
+                      >
+                        {{
+                          entry.snakeOrLadder.type === 'ladder'
+                            ? ' and climbed to '
+                            : ' and fell to '
+                        }}
+                        <strong>{{ entry.finalPosition }}</strong>
+                      </span>
+                    </template>
                   </template>
                 </div>
               </li>

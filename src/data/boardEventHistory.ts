@@ -28,8 +28,11 @@ export function parseBoardEventHistory(
 
   function toRollHistoryEntry(
     team: Team,
-    rollEntry: RawBoardEventHistoryEntry,
+    fromPosition: number,
+    toPosition: number,
     finalTile: number,
+    roll: number | null,
+    timestamp: string,
     snakeOrLadder?: RollHistoryEntry['snakeOrLadder'],
   ): RollHistoryEntry {
     return {
@@ -37,12 +40,12 @@ export function parseBoardEventHistory(
       teamId: team.id,
       teamName: team.name,
       teamColor: team.color,
-      roll: rollEntry.rolled ?? 0,
-      fromPosition: rollEntry.previousTile,
-      toPosition: rollEntry.newTile,
+      roll,
+      fromPosition,
+      toPosition,
       finalPosition: finalTile,
       snakeOrLadder,
-      timestamp: new Date(rollEntry.timestamp),
+      timestamp: new Date(timestamp),
     }
   }
 
@@ -50,7 +53,18 @@ export function parseBoardEventHistory(
     const rollEntry = pending.get(teamId)
     if (!rollEntry) return
     const team = teamById.get(teamId)
-    if (team) entries.push(toRollHistoryEntry(team, rollEntry, rollEntry.newTile))
+    if (team) {
+      entries.push(
+        toRollHistoryEntry(
+          team,
+          rollEntry.previousTile,
+          rollEntry.newTile,
+          rollEntry.newTile,
+          rollEntry.rolled ?? 0,
+          rollEntry.timestamp,
+        ),
+      )
+    }
     pending.delete(teamId)
   }
 
@@ -71,12 +85,36 @@ export function parseBoardEventHistory(
       continue
     }
 
+    // Ladders are only ever climbed via their own explicit event (challenge
+    // completion, possibly much later) — never merged into a preceding roll.
+    if (type === 'ladder') {
+      flushPending(teamId)
+      entries.push(
+        toRollHistoryEntry(
+          team,
+          item.previousTile,
+          item.previousTile,
+          item.newTile,
+          null,
+          item.timestamp,
+          { type: 'ladder' },
+        ),
+      )
+      continue
+    }
+
     const rollEntry = pending.get(teamId)
     if (rollEntry && rollEntry.newTile === item.previousTile) {
       entries.push(
-        toRollHistoryEntry(team, rollEntry, item.newTile, {
-          type: type === 'ladder' ? 'ladder' : 'snake',
-        }),
+        toRollHistoryEntry(
+          team,
+          rollEntry.previousTile,
+          rollEntry.newTile,
+          item.newTile,
+          rollEntry.rolled ?? 0,
+          rollEntry.timestamp,
+          { type: 'snake' },
+        ),
       )
       pending.delete(teamId)
     }

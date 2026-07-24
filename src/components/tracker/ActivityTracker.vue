@@ -126,7 +126,9 @@ const cooldownSecondsLeft = computed(() => {
 })
 const onCooldown = computed(() => cooldownSecondsLeft.value > 0)
 const rolling = computed(() => gameStore.state.rolling)
-const rollDisabled = computed(() => onCooldown.value || rolling.value)
+const rollDisabled = computed(
+  () => onCooldown.value || rolling.value || !!gameStore.state.winnerTeamId,
+)
 
 function selectTeam(teamId: string) {
   gameStore.clearRollError()
@@ -142,23 +144,41 @@ function rollDice() {
 <template>
   <div class="activity-tracker osrs-panel">
     <div class="tracker-tabs">
-      <button class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'live' }" @click="activeTab = 'live'">
+      <button
+        class="tracker-tab"
+        :class="{ 'tracker-tab--active': activeTab === 'live' }"
+        @click="activeTab = 'live'"
+      >
         <span class="tracker-tab__live-dot" />
         Live Updates
       </button>
-      <button v-if="!props.hideRollLogTab" class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'log' }"
-        @click="activeTab = 'log'">
+      <button
+        v-if="!props.hideRollLogTab"
+        class="tracker-tab"
+        :class="{ 'tracker-tab--active': activeTab === 'log' }"
+        @click="activeTab = 'log'"
+      >
         Roll Log
       </button>
-      <button class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'leaderboard' }"
-        @click="activeTab = 'leaderboard'">
+      <button
+        class="tracker-tab"
+        :class="{ 'tracker-tab--active': activeTab === 'leaderboard' }"
+        @click="activeTab = 'leaderboard'"
+      >
         Leaderboard
       </button>
-      <button class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'stats' }"
-        @click="activeTab = 'stats'">
+      <button
+        class="tracker-tab"
+        :class="{ 'tracker-tab--active': activeTab === 'stats' }"
+        @click="activeTab = 'stats'"
+      >
         Stats
       </button>
-      <button class="tracker-tab" :class="{ 'tracker-tab--active': activeTab === 'roll' }" @click="activeTab = 'roll'">
+      <button
+        class="tracker-tab"
+        :class="{ 'tracker-tab--active': activeTab === 'roll' }"
+        @click="activeTab = 'roll'"
+      >
         Roll Dice
       </button>
     </div>
@@ -183,8 +203,10 @@ function rollDice() {
         </div>
 
         <div v-for="(team, index) in rankedTeams" :key="team.id" class="stats-team">
-          <div class="leaderboard-table__row leaderboard-table__row--static"
-            :class="{ 'leaderboard-table__row--top': index < 3 }">
+          <div
+            class="leaderboard-table__row leaderboard-table__row--static"
+            :class="{ 'leaderboard-table__row--top': index < 3 }"
+          >
             <span class="rank-label" :class="`rank-label--${index + 1}`">
               {{ rankLabel(index) }}
             </span>
@@ -234,8 +256,10 @@ function rollDice() {
           </div>
 
           <div v-for="(stat, index) in teamStats" :key="stat.team.id" class="stats-team">
-            <div class="leaderboard-table__row stats-table__row leaderboard-table__row--static"
-              :class="{ 'leaderboard-table__row--top': index < 3 }">
+            <div
+              class="leaderboard-table__row stats-table__row leaderboard-table__row--static"
+              :class="{ 'leaderboard-table__row--top': index < 3 }"
+            >
               <span class="rank-label" :class="`rank-label--${index + 1}`">
                 {{ rankLabel(index) }}
               </span>
@@ -251,7 +275,11 @@ function rollDice() {
             </div>
 
             <ul class="stats-members">
-              <li v-for="member in sortedMembers(stat.team)" :key="member.displayName" class="stats-member">
+              <li
+                v-for="member in sortedMembers(stat.team)"
+                :key="member.displayName"
+                class="stats-member"
+              >
                 <span class="stats-member__name">
                   {{ member.displayName }}
                   <span v-if="altAccountNames(member).length > 0" class="stats-member__alts">
@@ -276,10 +304,14 @@ function rollDice() {
       <div v-else class="roll-tab">
         <div class="roll-panel">
           <div class="team-tabs">
-            <button v-for="team in gameStore.state.teams" :key="team.id" class="team-tab-chip"
+            <button
+              v-for="team in gameStore.state.teams"
+              :key="team.id"
+              class="team-tab-chip"
               :class="{ 'team-tab-chip--active': team.id === selectedTeamId }"
               :style="team.id === selectedTeamId ? { '--chip-color': team.color } : undefined"
-              @click="selectTeam(team.id)">
+              @click="selectTeam(team.id)"
+            >
               {{ team.name }}
             </button>
           </div>
@@ -792,7 +824,6 @@ function rollDice() {
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     opacity: 1;

@@ -1,5 +1,6 @@
 import { reactive, nextTick } from 'vue'
 import { parseTeams } from '@/data/getTeams'
+import { boardConfig } from '@/data/boardConfig'
 import {
   buildBlankTiles,
   parseBoardInitial,
@@ -49,6 +50,8 @@ interface GameState {
   rollCooldownUntil: number | null
   rolling: boolean
   rollError: string | null
+  winnerTeamId: string | null
+  victoryDismissed: boolean
 }
 
 let baseTeams: Team[] = []
@@ -68,6 +71,8 @@ const state = reactive<GameState>({
   rollCooldownUntil: null,
   rolling: false,
   rollError: null,
+  winnerTeamId: null,
+  victoryDismissed: false,
 })
 
 async function loadTeams() {
@@ -170,7 +175,9 @@ function applyScoreUpdate(entry: RawScorePlayerEntry) {
 
 function canRoll(): boolean {
   return (
-    !state.rolling && (state.rollCooldownUntil === null || Date.now() >= state.rollCooldownUntil)
+    !state.rolling &&
+    !state.winnerTeamId &&
+    (state.rollCooldownUntil === null || Date.now() >= state.rollCooldownUntil)
   )
 }
 
@@ -199,11 +206,32 @@ interface BoardEventUpdate {
   timestamp: string
 }
 
-function findSlideDestination(tileId: number): number | undefined {
-  return (
-    state.snakes.find((s) => s.from === tileId)?.to ??
-    state.ladders.find((l) => l.from === tileId)?.to
-  )
+// Ladders are only ever climbed via their own explicit board-event-update
+// (triggered by challenge completion, possibly much later) — never predicted
+// on landing. Snakes still slide instantly on landing, per classic rules.
+function findSnakeSlideDestination(tileId: number): number | undefined {
+  return state.snakes.find((s) => s.from === tileId)?.to
+}
+
+function animateStandaloneClimb(teamId: string, previousTile: number, newTile: number) {
+  animVersion[teamId] = (animVersion[teamId] ?? 0) + 1
+  const myVersion = animVersion[teamId]!
+
+  revealHeldTiles.add(newTile)
+  state.displayedPositions[teamId] = previousTile
+  state.specialMoving[teamId] = true
+
+  nextTick().then(() => {
+    if (animVersion[teamId] !== myVersion) {
+      releaseTileReveal(newTile)
+      return
+    }
+    state.displayedPositions[teamId] = newTile
+    setTimeout(() => {
+      if (animVersion[teamId] === myVersion) delete state.specialMoving[teamId]
+      releaseTileReveal(newTile)
+    }, SPECIAL_TRANSITION_MS + 100)
+  })
 }
 
 const pendingRollByTeam = new Map<string, BoardEventUpdate>()
@@ -230,13 +258,31 @@ function applyBoardEventUpdate(update: BoardEventUpdate) {
         timestamp: new Date(pendingRoll.timestamp),
       })
       pendingRollByTeam.delete(team.id)
+      team.position = update.newTile
+      if (state.historyIndex !== null) jumpToLive()
+      return
     }
+
+    state.rollHistory.unshift({
+      id: Date.now(),
+      teamId: team.id,
+      teamName: team.name,
+      teamColor: team.color,
+      roll: null,
+      fromPosition: update.previousTile,
+      toPosition: update.previousTile,
+      finalPosition: update.newTile,
+      snakeOrLadder: { type: type === 'ladder' ? 'ladder' : 'snake' },
+      timestamp: new Date(update.timestamp),
+    })
+
     team.position = update.newTile
     if (state.historyIndex !== null) jumpToLive()
+    animateStandaloneClimb(team.id, update.previousTile, update.newTile)
     return
   }
 
-  const slideTo = findSlideDestination(update.newTile)
+  const slideTo = findSnakeSlideDestination(update.newTile)
   const finalTile = slideTo ?? update.newTile
 
   team.position = finalTile
@@ -448,7 +494,6 @@ async function rollForTeam(teamId: string) {
     await postDiceRoll(teamId)
   } catch (err) {
     state.rollError = err instanceof DiceRollError ? err.message : 'Failed to roll dice.'
-    return
   } finally {
     state.rolling = false
   }
@@ -469,6 +514,12 @@ function resetAll() {
   state.rollHistory = []
   state.historyIndex = null
   state.rollCooldownUntil = null
+  state.winnerTeamId = null
+  state.victoryDismissed = false
+}
+
+function dismissVictory() {
+  state.victoryDismissed = true
 }
 
 function updateTaskProgress(
@@ -494,13 +545,17 @@ function getTeamProgressOnTile(teamId: string, tileId: number): TeamTaskProgress
   return team?.taskProgress.find((p) => p.tileId === tileId)
 }
 
+function checkVictory(teamId: string, tileId: number, isCompleted: boolean) {
+  if (state.winnerTeamId) return
+  if (tileId === boardConfig.totalTiles && isCompleted) {
+    state.winnerTeamId = teamId
+  }
+}
+
 function applyChallengeProgressEntry(entry: RawChallengeProgressEntry) {
-  updateTaskProgress(
-    String(entry.teamId),
-    entry.tileId,
-    entry.completionPercentage,
-    entry.isTileCompleted,
-  )
+  const teamId = String(entry.teamId)
+  updateTaskProgress(teamId, entry.tileId, entry.completionPercentage, entry.isTileCompleted)
+  checkVictory(teamId, entry.tileId, entry.isTileCompleted)
 }
 
 function applyChallengeProgressInitial(raw: RawChallengeProgressEntry[]) {
@@ -541,6 +596,7 @@ export const gameStore = {
   canRoll,
   clearRollError,
   resetAll,
+  dismissVictory,
   updateTaskProgress,
   getTeamProgressOnTile,
   setConnected,

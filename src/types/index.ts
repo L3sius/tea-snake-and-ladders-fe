@@ -65,7 +65,7 @@ export interface RollHistoryEntry {
   teamId: string
   teamName: string
   teamColor: string
-  roll: number
+  roll: number | null
   fromPosition: number
   toPosition: number
   finalPosition: number

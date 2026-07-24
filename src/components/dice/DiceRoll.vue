@@ -14,7 +14,7 @@ const team = computed(() => gameStore.state.teams.find((t) => t.id === props.eve
 const diceDotImage = SNAKE_COLOR_VARIANTS[0]!.headHref
 
 onMounted(() => {
-  const audio = new Audio(pickDiceSound())
+  const audio = new Audio(pickDiceSound(props.event.roll))
   audio.volume = 0.6
   audio.play().catch(() => {})
 })

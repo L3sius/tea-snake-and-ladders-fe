@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import BottomTabBar from '@/components/shared/BottomTabBar.vue'
+import VictoryModal from '@/components/shared/VictoryModal.vue'
 import { sseService } from '@/services/sseService'
 import { gameStore } from '@/stores/gameStore'
 
@@ -32,6 +33,7 @@ watch(
       <RouterView />
     </main>
     <BottomTabBar />
+    <VictoryModal />
   </div>
 </template>
 

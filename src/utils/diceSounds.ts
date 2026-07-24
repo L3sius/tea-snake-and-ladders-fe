@@ -11,12 +11,16 @@ export const DICE_SOUND_VARIANTS: DiceSoundVariant[] = [
   { src: '/sounds/dice_roll_rare_voice_3.ogg', weight: 5 },
 ]
 
-export function pickDiceSound(): string {
+const DICE_SOUND_SPECIAL_ONE = '/sounds/dice_roll_special_one.ogg'
+
+export function pickDiceSound(roll: number): string {
+  if (roll === 1) return DICE_SOUND_SPECIAL_ONE
+
   const total = DICE_SOUND_VARIANTS.reduce((sum, v) => sum + v.weight, 0)
-  let roll = Math.random() * total
+  let pick = Math.random() * total
   for (const variant of DICE_SOUND_VARIANTS) {
-    if (roll < variant.weight) return variant.src
-    roll -= variant.weight
+    if (pick < variant.weight) return variant.src
+    pick -= variant.weight
   }
   return DICE_SOUND_VARIANTS[0]!.src
 }
