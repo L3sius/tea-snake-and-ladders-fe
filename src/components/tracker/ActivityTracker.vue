@@ -18,6 +18,22 @@ const faqOpen = ref(false)
 
 const liveActivity = computed(() => gameStore.state.liveActivity)
 
+const teamColorByPlayer = computed(() => {
+  const map = new Map<string, string>()
+  for (const team of gameStore.state.teams) {
+    for (const member of team.members) {
+      for (const account of member.accounts) {
+        map.set(account.name, team.color)
+      }
+    }
+  }
+  return map
+})
+
+function playerColor(name: string): string | undefined {
+  return teamColorByPlayer.value.get(name)
+}
+
 const rankedTeams = computed(() =>
   [...gameStore.state.teams].sort((a, b) => b.position - a.position),
 )
@@ -200,7 +216,11 @@ function rollDice() {
           :class="{ 'live-entry--death': entry.isDeath }"
         >
           <span class="live-entry__age">{{ formatRelativeTime(entry.timestamp) }}</span>
-          <span class="live-entry__player">{{ entry.player }}</span>
+          <span
+            class="live-entry__player"
+            :style="entry.isDeath ? undefined : { color: playerColor(entry.player) }"
+            >{{ entry.player }}</span
+          >
           <span class="live-entry__action"> {{ entry.action }}</span>
         </li>
       </ul>
@@ -484,7 +504,7 @@ function rollDice() {
 
 .live-entry__player {
   font-weight: 600;
-  color: var(--osrs-gold);
+  color: var(--osrs-green);
   white-space: nowrap;
   flex-shrink: 0;
 }
