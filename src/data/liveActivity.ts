@@ -27,7 +27,7 @@ export interface RawPetEntry extends RawActivityEntryBase {
 
 export interface RawDeathEntry extends RawActivityEntryBase {
   eventTypeFromDink: 'DEATH'
-  source: string
+  source?: string
 }
 
 export type RawActivityEntry =
@@ -48,7 +48,7 @@ function formatAction(raw: RawActivityEntry): string {
     case 'PET':
       return `received a pet: ${raw.petName}`
     case 'DEATH':
-      return `died to ${raw.source}`
+      return raw.source ? `died to ${raw.source}` : 'has died a mysterious death'
   }
 }
 
