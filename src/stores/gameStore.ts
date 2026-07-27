@@ -545,6 +545,10 @@ function getTeamProgressOnTile(teamId: string, tileId: number): TeamTaskProgress
   return team?.taskProgress.find((p) => p.tileId === tileId)
 }
 
+function getTeamArrivalTime(teamId: string, tileId: number): Date | undefined {
+  return state.rollHistory.find((e) => e.teamId === teamId && e.finalPosition === tileId)?.timestamp
+}
+
 function checkVictory(teamId: string, tileId: number, isCompleted: boolean) {
   if (state.winnerTeamId) return
   if (tileId === boardConfig.totalTiles && isCompleted) {
@@ -599,6 +603,7 @@ export const gameStore = {
   dismissVictory,
   updateTaskProgress,
   getTeamProgressOnTile,
+  getTeamArrivalTime,
   setConnected,
   setTeams,
   stepHistoryPrev,

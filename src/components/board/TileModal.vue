@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import type { Tile, Team } from '@/types'
 import { gameStore } from '@/stores/gameStore'
 import { getSnakeColor } from '@/utils/snakeColors'
+import { formatDuration } from '@/utils/formatDuration'
 import TeamToken from './TeamToken.vue'
 
 const props = defineProps<{
@@ -14,6 +15,22 @@ const emit = defineEmits<{
 }>()
 
 const tile = computed(() => props.tile)
+
+const now = ref(Date.now())
+let tickInterval: ReturnType<typeof setInterval> | undefined
+onMounted(() => {
+  tickInterval = setInterval(() => {
+    now.value = Date.now()
+  }, 1000)
+})
+onUnmounted(() => clearInterval(tickInterval))
+
+function timeOnTile(team: Team): string | null {
+  if (!tile.value) return null
+  const arrival = gameStore.getTeamArrivalTime(team.id, tile.value.id)
+  if (!arrival) return null
+  return formatDuration(now.value - arrival.getTime())
+}
 
 const tierLabel: Record<1 | 2 | 3, string> = {
   1: 'Tier 1 — Easy',
@@ -92,6 +109,9 @@ function handleBackdropClick(e: MouseEvent) {
                 <TeamToken :team="team" size="lg" />
                 <div class="modal__team-info">
                   <span class="modal__team-name">{{ team.name }}</span>
+                  <span v-if="timeOnTile(team)" class="modal__time-on-tile">
+                    On this tile for {{ timeOnTile(team) }}
+                  </span>
                   <div class="modal__progress-row">
                     <div class="modal__progress-bar-wrap">
                       <div
@@ -313,6 +333,12 @@ function handleBackdropClick(e: MouseEvent) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.modal__time-on-tile {
+  font-size: 0.85rem;
+  color: var(--osrs-text-muted);
+  font-style: italic;
 }
 
 .modal__progress-row {
