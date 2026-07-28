@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { Tile, Team } from '@/types'
 import { gameStore } from '@/stores/gameStore'
 import { getSnakeColor } from '@/utils/snakeColors'
 import { formatDuration } from '@/utils/formatDuration'
+import { formatChallengeRequirement } from '@/utils/formatChallenge'
 import TeamToken from './TeamToken.vue'
 
 const props = defineProps<{
@@ -47,6 +48,30 @@ const snakeColor = computed(() => {
 const showImage = computed(
   () => !!tile.value?.image && !tile.value.image.endsWith('/background.png'),
 )
+
+const requirement = computed(() =>
+  tile.value?.challengeData ? formatChallengeRequirement(tile.value.challengeData) : null,
+)
+
+const REQUIREMENT_COLLAPSE_THRESHOLD = 8
+const requirementExpanded = ref(false)
+watch(
+  () => tile.value?.id,
+  () => {
+    requirementExpanded.value = false
+  },
+)
+
+const visibleRequirementItems = computed(() => {
+  if (!requirement.value) return []
+  if (
+    requirementExpanded.value ||
+    requirement.value.items.length <= REQUIREMENT_COLLAPSE_THRESHOLD
+  ) {
+    return requirement.value.items
+  }
+  return requirement.value.items.slice(0, REQUIREMENT_COLLAPSE_THRESHOLD)
+})
 
 const teamsOnTile = computed<Team[]>(() => {
   if (!tile.value) return []
@@ -99,8 +124,23 @@ function handleBackdropClick(e: MouseEvent) {
               <p class="modal__description">{{ tile.description }}</p>
             </div>
 
-            <div v-if="(tile.requiredDrops ?? 1) > 1" class="modal__drops-info">
-              Requires <strong>{{ tile.requiredDrops }} drops</strong>
+            <div v-if="requirement" class="modal__requirement">
+              <span v-if="requirement.clueLabel" class="modal__requirement-clue">
+                {{ requirement.clueLabel }}
+              </span>
+              <template v-if="requirement.items.length > 0">
+                <p class="modal__requirement-heading">{{ requirement.heading }}:</p>
+                <ul class="modal__requirement-list">
+                  <li v-for="(item, index) in visibleRequirementItems" :key="index">{{ item }}</li>
+                </ul>
+                <button
+                  v-if="requirement.items.length > REQUIREMENT_COLLAPSE_THRESHOLD"
+                  class="modal__requirement-toggle"
+                  @click="requirementExpanded = !requirementExpanded"
+                >
+                  {{ requirementExpanded ? 'Show less' : `Show all (${requirement.items.length})` }}
+                </button>
+              </template>
             </div>
 
             <div v-if="teamsOnTile.length > 0" class="modal__teams">
@@ -286,12 +326,48 @@ function handleBackdropClick(e: MouseEvent) {
   }
 }
 
-.modal__drops-info {
-  font-size: 1rem;
-  color: var(--osrs-gold);
-  padding: 0.65rem;
+.modal__requirement {
+  padding: 0.65rem 0.75rem;
   background: var(--osrs-panel-light);
   border-left: 3px solid var(--osrs-border-gold);
+}
+
+.modal__requirement-clue {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  color: var(--osrs-gold);
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+.modal__requirement-heading {
+  font-size: 1rem;
+  color: var(--osrs-gold);
+  margin-bottom: 0.3rem;
+}
+
+.modal__requirement-list {
+  list-style: disc;
+  padding-left: 1.2rem;
+  font-size: 0.95rem;
+  color: var(--osrs-text);
+  line-height: 1.5;
+}
+
+.modal__requirement-toggle {
+  margin-top: 0.5rem;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.85rem;
+  color: var(--osrs-gold);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.modal__requirement-toggle:hover {
+  color: var(--osrs-text-bright);
 }
 
 .modal__section-title {

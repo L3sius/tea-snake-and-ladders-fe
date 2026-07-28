@@ -1,5 +1,5 @@
 import { boardConfig } from './boardConfig'
-import type { Tile, Snake, Ladder, Tier } from '@/types'
+import type { Tile, Snake, Ladder, Tier, ChallengeData } from '@/types'
 
 export interface RawBoardInitialTile {
   tileId: number
@@ -11,6 +11,7 @@ export interface RawBoardInitialTile {
   image?: string
   ladderTo?: number
   snakeTo?: number
+  challengeData?: ChallengeData
 }
 
 const DIFFICULTY_TIER: Record<RawBoardInitialTile['difficulty'], Tier> = {
@@ -41,6 +42,7 @@ export function parseTileEntry(entry: RawBoardInitialTile): Tile {
     name: entry.variation ?? '',
     description: entry.description ?? '',
     image,
+    challengeData: entry.challengeData,
   }
 }
 

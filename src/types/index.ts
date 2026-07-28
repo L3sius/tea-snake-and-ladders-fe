@@ -1,5 +1,45 @@
 export type Tier = 1 | 2 | 3
 
+export interface ChallengeLootEntry {
+  name?: string
+  nameStartsWith?: string[]
+  nameEndsIn?: string
+  count?: number
+  monster?: string
+}
+
+export interface ChallengeClueReward {
+  min_gp: number
+  max_gp: number
+}
+
+export interface ChallengeClue {
+  tier: string
+  reward?: ChallengeClueReward
+}
+
+export type ChallengeType =
+  | 'item'
+  | 'collection_any'
+  | 'collection_all'
+  | 'value'
+  | 'value_collection'
+  | 'kc'
+
+export interface ChallengeData {
+  category: 'loot' | 'clue'
+  type: ChallengeType
+  difficulty_tier: number
+  disallowOnKc: number
+  count?: number
+  loot?: ChallengeLootEntry[]
+  clue?: ChallengeClue
+  source?: string
+  gp?: number
+  minGp?: number
+  maxGp?: number
+}
+
 export interface Tile {
   id: number
   tier: Tier
@@ -7,7 +47,7 @@ export interface Tile {
   description: string
   image?: string
   skill?: string
-  requiredDrops?: number
+  challengeData?: ChallengeData
 }
 
 export interface TeamTaskProgress {
