@@ -551,6 +551,12 @@ function getTeamArrivalTime(teamId: string, tileId: number): Date | undefined {
   return state.rollHistory.find((e) => e.teamId === teamId && e.finalPosition === tileId)?.timestamp
 }
 
+function getSnakeFallCount(fromTile: number, toTile: number): number {
+  return state.rollHistory.filter(
+    (e) => e.snakeOrLadder?.type === 'snake' && e.toPosition >= fromTile && e.toPosition <= toTile,
+  ).length
+}
+
 function checkVictory(teamId: string, tileId: number, isCompleted: boolean) {
   if (state.winnerTeamId) return
   if (tileId === boardConfig.totalTiles && isCompleted) {
@@ -612,6 +618,7 @@ export const gameStore = {
   updateTaskProgress,
   getTeamProgressOnTile,
   getTeamArrivalTime,
+  getSnakeFallCount,
   setConnected,
   setTeams,
   stepHistoryPrev,

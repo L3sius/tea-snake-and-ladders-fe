@@ -21,6 +21,23 @@ const activeDiceRoll = computed(() => gameStore.state.activeDiceRoll)
 const teams = computed(() => gameStore.state.teams)
 const tiles = computed(() => gameStore.state.tiles)
 
+const SUG_PASSAGE = { from: 44, to: 49 }
+
+const sugPassageStyle = computed(() => {
+  const start = getTilePosition(SUG_PASSAGE.from)
+  const end = getTilePosition(SUG_PASSAGE.to)
+  const colStart = Math.min(start.col, end.col)
+  const colEnd = Math.max(start.col, end.col) + 1
+  return {
+    gridColumn: `${colStart} / ${colEnd}`,
+    gridRow: `${start.row} / ${start.row + 1}`,
+  }
+})
+
+const sugPassageFallCount = computed(() =>
+  gameStore.getSnakeFallCount(SUG_PASSAGE.from, SUG_PASSAGE.to),
+)
+
 function isTeamTileCompleted(team: Team): boolean {
   return gameStore.getTeamProgressOnTile(team.id, team.position)?.isCompleted ?? false
 }
@@ -207,6 +224,13 @@ function ladderFeetTransform(ladder: LadderBody): string {
         @click="handleTileClick"
       />
 
+      <div class="sug-passage" :style="sugPassageStyle" aria-hidden="true">
+        <span class="sug-passage__label">
+          Sug Passage
+          <span class="sug-passage__stats">- {{ sugPassageFallCount }} Accidents</span>
+        </span>
+      </div>
+
       <div class="token-overlay" aria-hidden="true">
         <div
           v-for="team in teams"
@@ -352,6 +376,56 @@ function ladderFeetTransform(ladder: LadderBody): string {
 
 .game-board__tile {
   z-index: 1;
+}
+
+.sug-passage {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 0.3rem;
+  border: 4px solid transparent;
+  border-image: repeating-linear-gradient(45deg, #f1c40f 0 10px, #111 10px 20px) 8;
+  box-shadow: 0 0 14px rgba(241, 196, 15, 0.6);
+}
+
+.sug-passage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(241, 196, 15, 0.1) 0 10px,
+    rgba(0, 0, 0, 0.15) 10px 20px
+  );
+}
+
+.sug-passage__label {
+  position: relative;
+  font-family: var(--font-display);
+  font-size: 0.5rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--border-radius);
+  background: rgba(8, 18, 8, 0.85);
+  color: #f1c40f;
+  white-space: nowrap;
+}
+
+.sug-passage__stats {
+  font-size: 0.4rem;
+  color: var(--osrs-text-bright);
+}
+
+@media (max-width: 768px) {
+  .sug-passage__label {
+    font-size: 0.4rem;
+  }
+
+  .sug-passage__stats {
+    font-size: 0.32rem;
+  }
 }
 
 .token-overlay {
