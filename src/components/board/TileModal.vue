@@ -4,7 +4,7 @@ import type { Tile, Team } from '@/types'
 import { gameStore } from '@/stores/gameStore'
 import { getSnakeColor } from '@/utils/snakeColors'
 import { formatDuration } from '@/utils/formatDuration'
-import { formatChallengeRequirement } from '@/utils/formatChallenge'
+import { formatChallengeRequirement, type ChallengeRequirement } from '@/utils/formatChallenge'
 import TeamToken from './TeamToken.vue'
 
 const props = defineProps<{
@@ -62,16 +62,33 @@ watch(
   },
 )
 
-const visibleRequirementItems = computed(() => {
+const visibleRequirementLines = computed(() => {
   if (!requirement.value) return []
   if (
     requirementExpanded.value ||
-    requirement.value.items.length <= REQUIREMENT_COLLAPSE_THRESHOLD
+    requirement.value.lines.length <= REQUIREMENT_COLLAPSE_THRESHOLD
   ) {
-    return requirement.value.items
+    return requirement.value.lines
   }
-  return requirement.value.items.slice(0, REQUIREMENT_COLLAPSE_THRESHOLD)
+  return requirement.value.lines.slice(0, REQUIREMENT_COLLAPSE_THRESHOLD)
 })
+
+const PROGRESS_CHECKLIST_TYPES = new Set([
+  'item',
+  'collection_all',
+  'collection_any',
+  'value_collection',
+])
+
+function teamChecklist(team: Team): ChallengeRequirement | null {
+  const challenge = tile.value?.challengeData
+  if (!challenge || !PROGRESS_CHECKLIST_TYPES.has(challenge.type)) return null
+
+  const progress = gameStore.getTeamProgressOnTile(team.id, tile.value!.id)?.progress
+  if (!progress) return null
+
+  return formatChallengeRequirement(challenge, progress)
+}
 
 const teamsOnTile = computed<Team[]>(() => {
   if (!tile.value) return []
@@ -128,17 +145,27 @@ function handleBackdropClick(e: MouseEvent) {
               <span v-if="requirement.clueLabel" class="modal__requirement-clue">
                 {{ requirement.clueLabel }}
               </span>
-              <template v-if="requirement.items.length > 0">
+              <p
+                v-if="requirement.lines.length === 1"
+                class="modal__requirement-heading modal__requirement-heading--inline"
+              >
+                {{ requirement.heading }}:
+                <span class="modal__requirement-value">{{ requirement.lines[0]!.text }}</span>
+              </p>
+
+              <template v-else-if="requirement.lines.length > 1">
                 <p class="modal__requirement-heading">{{ requirement.heading }}:</p>
                 <ul class="modal__requirement-list">
-                  <li v-for="(item, index) in visibleRequirementItems" :key="index">{{ item }}</li>
+                  <li v-for="(line, index) in visibleRequirementLines" :key="index">
+                    {{ line.text }}
+                  </li>
                 </ul>
                 <button
-                  v-if="requirement.items.length > REQUIREMENT_COLLAPSE_THRESHOLD"
+                  v-if="requirement.lines.length > REQUIREMENT_COLLAPSE_THRESHOLD"
                   class="modal__requirement-toggle"
                   @click="requirementExpanded = !requirementExpanded"
                 >
-                  {{ requirementExpanded ? 'Show less' : `Show all (${requirement.items.length})` }}
+                  {{ requirementExpanded ? 'Show less' : `Show all (${requirement.lines.length})` }}
                 </button>
               </template>
             </div>
@@ -170,6 +197,70 @@ function handleBackdropClick(e: MouseEvent) {
                       }}
                     </span>
                   </div>
+
+                  <template
+                    v-for="checklist in [teamChecklist(team)]"
+                    :key="`${team.id}-checklist`"
+                  >
+                    <div
+                      v-if="
+                        checklist &&
+                        tile.challengeData?.type === 'value_collection' &&
+                        checklist.summary
+                      "
+                      class="modal__checklist-bar"
+                    >
+                      <div class="modal__progress-bar-wrap">
+                        <div
+                          class="modal__progress-bar"
+                          :style="{
+                            width: `${Math.min(100, (checklist.summary.obtained / checklist.summary.needed) * 100)}%`,
+                            color: team.color,
+                          }"
+                        />
+                      </div>
+                      <span class="modal__progress-label">
+                        {{ checklist.summary.obtained.toLocaleString() }} /
+                        {{ checklist.summary.needed.toLocaleString() }} gp
+                      </span>
+                    </div>
+
+                    <div v-else-if="checklist" class="modal__checklist">
+                      <span v-if="checklist.summary" class="modal__checklist-summary">
+                        {{ checklist.summary.obtained }}/{{ checklist.summary.needed }} obtained
+                      </span>
+
+                      <template v-if="tile.challengeData?.type === 'collection_any'">
+                        <div
+                          v-for="(line, index) in checklist.obtainedLines"
+                          :key="index"
+                          class="modal__checklist-line modal__checklist-line--done"
+                        >
+                          <span class="modal__checklist-text">{{ line.text }}</span>
+                        </div>
+                        <p
+                          v-if="!checklist.obtainedLines || checklist.obtainedLines.length === 0"
+                          class="modal__checklist-empty"
+                        >
+                          Nothing obtained yet
+                        </p>
+                      </template>
+
+                      <template v-else>
+                        <div
+                          v-for="(line, index) in checklist.lines"
+                          :key="index"
+                          class="modal__checklist-line"
+                          :class="{ 'modal__checklist-line--done': line.satisfied }"
+                        >
+                          <span class="modal__checklist-check">{{
+                            line.satisfied ? '✓' : '○'
+                          }}</span>
+                          <span class="modal__checklist-text">{{ line.text }}</span>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
                 </div>
               </div>
             </div>
@@ -347,6 +438,14 @@ function handleBackdropClick(e: MouseEvent) {
   margin-bottom: 0.3rem;
 }
 
+.modal__requirement-heading--inline {
+  margin-bottom: 0;
+}
+
+.modal__requirement-value {
+  color: var(--osrs-text);
+}
+
 .modal__requirement-list {
   list-style: disc;
   padding-left: 1.2rem;
@@ -452,6 +551,61 @@ function handleBackdropClick(e: MouseEvent) {
   font-size: 1rem;
   color: var(--osrs-text-muted);
   font-style: italic;
+}
+
+.modal__checklist-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.modal__checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.modal__checklist-summary {
+  font-family: var(--font-display);
+  font-size: 0.55rem;
+  color: var(--osrs-text-muted);
+  margin-bottom: 0.15rem;
+}
+
+.modal__checklist-empty {
+  font-size: 0.85rem;
+  color: var(--osrs-text-muted);
+  font-style: italic;
+}
+
+.modal__checklist-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--osrs-text-muted);
+}
+
+.modal__checklist-line--done {
+  color: var(--osrs-text);
+}
+
+.modal__checklist-check {
+  flex-shrink: 0;
+  color: var(--osrs-text-muted);
+}
+
+.modal__checklist-line--done .modal__checklist-check {
+  color: var(--osrs-green);
+}
+
+.modal__checklist-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .modal-enter-active,

@@ -54,6 +54,7 @@ export interface TeamTaskProgress {
   tileId: number
   completionPercentage: number
   isCompleted: boolean
+  progress?: Record<string, number>
 }
 
 export interface PlayerAccount {

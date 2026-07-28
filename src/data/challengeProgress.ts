@@ -3,4 +3,5 @@ export interface RawChallengeProgressEntry {
   tileId: number
   completionPercentage: number
   isTileCompleted: boolean
+  progress?: Record<string, number>
 }

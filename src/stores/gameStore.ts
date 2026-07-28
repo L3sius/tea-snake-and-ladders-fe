@@ -527,6 +527,7 @@ function updateTaskProgress(
   tileId: number,
   completionPercentage: number,
   isCompleted: boolean,
+  progress?: Record<string, number>,
 ) {
   const team = state.teams.find((t) => t.id === teamId)
   if (!team) return
@@ -535,8 +536,9 @@ function updateTaskProgress(
   if (existing) {
     existing.completionPercentage = completionPercentage
     existing.isCompleted = isCompleted
+    existing.progress = progress
   } else {
-    team.taskProgress.push({ tileId, completionPercentage, isCompleted })
+    team.taskProgress.push({ tileId, completionPercentage, isCompleted, progress })
   }
 }
 
@@ -558,7 +560,13 @@ function checkVictory(teamId: string, tileId: number, isCompleted: boolean) {
 
 function applyChallengeProgressEntry(entry: RawChallengeProgressEntry) {
   const teamId = String(entry.teamId)
-  updateTaskProgress(teamId, entry.tileId, entry.completionPercentage, entry.isTileCompleted)
+  updateTaskProgress(
+    teamId,
+    entry.tileId,
+    entry.completionPercentage,
+    entry.isTileCompleted,
+    entry.progress,
+  )
   checkVictory(teamId, entry.tileId, entry.isTileCompleted)
 }
 
